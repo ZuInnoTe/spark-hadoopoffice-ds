@@ -5,6 +5,6 @@
         Datasource format: org.zuinnote.spark.office.Excel
         Loading and Saving of old Excel (.xls) and new Excel (.xlsx)
 
-This datasource is available on Spark-packages.org and on Maven Central.
+This datasource will be available on Spark-packages.org and on Maven Central.
 
 Find here the status from the Continuous Integration service: https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds/
