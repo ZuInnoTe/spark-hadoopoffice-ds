@@ -1,5 +1,5 @@
 # spark-hadoopoffice-ds
- A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the HadoopOffice library. This Spark datasource assumes at least Spark 1.5. Currently this datasource supports the following formats of the HadoopOffice library:
+ A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the HadoopOffice library. This Spark datasource assumes at least Spark 2.0. Currently this datasource supports the following formats of the HadoopOffice library:
 
 * Excel
  * Datasource format: org.zuinnote.spark.office.Excel
