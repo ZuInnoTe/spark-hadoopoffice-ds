@@ -19,7 +19,7 @@ Version based on hadoopoffice library 1.0.0 and the new mapreduce API via the [F
 All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format) are supported. However, in the datasource you specify them without the prefix hadoopoffice. For example, instead of "hadoopoffice.read.locale.bcp47" you need to specify the option as "read.locale.bcp47".
 
 There is one option related to Spark in case you need to write rows containing primitive types. In this case a default sheetname need to be set:
-* "write.spark.defaultSheetName", any valid sheetname, e.g. Sheet1
+* "write.spark.defaultsheetname", any valid sheetname, e.g. Sheet1
 
 Additionally, the following options of the standard Hadoop API are supported:
 * "mapreduce.output.fileoutputformat.compress", true if output should be compressed, false if not. Note that many office formats have already a build-in compression so an additional compression may not make sense.
