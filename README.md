@@ -1,5 +1,5 @@
 # spark-hadoopoffice-ds
- A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the HadoopOffice library. This Spark datasource assumes at least Spark 1.5. Currently this datasource supports the following formats of the HadoopOffice library:
+ A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the HadoopOffice library. This Spark datasource assumes at least Spark 2.0. Currently this datasource supports the following formats of the HadoopOffice library:
 
 * Excel
  * Datasource format: org.zuinnote.spark.office.Excel
@@ -18,9 +18,12 @@ Version based on hadoopoffice library 1.0.0 and the new mapreduce API via the [F
 # Options
 All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format) are supported. However, in the datasource you specify them without the prefix hadoopoffice. For example, instead of "hadoopoffice.read.locale.bcp47" you need to specify the option as "read.locale.bcp47".
 
+There is one option related to Spark in case you need to write rows containing primitive types. In this case a default sheetname need to be set:
+* "write.spark.defaultsheetname", any valid sheetname, e.g. Sheet1
+
 Additionally, the following options of the standard Hadoop API are supported:
-* mapreduce.output.fileoutputformat.compress, true if output should be compressed, false if not. Note that many office formats have already a build-in compression so an additional compression may not make sense.
-* mapreduce.output.fileoutputformat.compress.codec, codec class, e.g. org.apache.hadoop.io.compress.GzipCodec
+* "mapreduce.output.fileoutputformat.compress", true if output should be compressed, false if not. Note that many office formats have already a build-in compression so an additional compression may not make sense.
+* "mapreduce.output.fileoutputformat.compress.codec", codec class, e.g. org.apache.hadoop.io.compress.GzipCodec
 
 
 
@@ -40,3 +43,21 @@ groupId: com.github.zuinnote
 artifactId: spark-hadoopoffice-ds_2.11
 
 version: 1.0.0
+
+# Develop
+## Reading
+tbd
+## Writing
+tbd
+
+# Language bindings
+## Scala
+tbd
+## Java
+tbd
+## Python
+tbd
+## R
+tbd
+## SQL
+tbd
