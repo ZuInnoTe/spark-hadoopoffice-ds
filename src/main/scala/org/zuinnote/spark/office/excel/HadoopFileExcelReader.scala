@@ -48,18 +48,11 @@ class HadoopFileExcelReader(
     private var reader: RecordReader[Text,ArrayWritable]=null
   private val iterator = {
     val fileSplit = new FileSplit(
-      new Path(new URI(file.filePath)),
-      file.start,
-      file.length,
-      // TODO: Implement Locality
-      Array.empty)
+      new Path(new URI(file.filePath)),file.start,file.length,Array.empty) // todo: implement locality (replace Array.empty with the locations)
     val attemptId = new TaskAttemptID(new TaskID(new JobID(), TaskType.MAP, 0), 0)
     val hadoopAttemptContext = new TaskAttemptContextImpl(conf, attemptId)
     val inputFormat = new ExcelFileInputFormat()
     reader = inputFormat.createRecordReader(fileSplit,hadoopAttemptContext)
-    LOG.info(file.start)
-    LOG.info(file.length)
-    LOG.info(fileSplit)
     reader.initialize(fileSplit, hadoopAttemptContext)
     new RecordReaderIterator(reader)
   }
