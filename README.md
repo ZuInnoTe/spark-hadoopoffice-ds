@@ -44,6 +44,26 @@ artifactId: spark-hadoopoffice-ds_2.11
 
 version: 1.0.1
 
+# Schema
+## Excel File
+An Excel file loaded into a DataFrame  has the following schema. Basically each row contains an Array with all Excel cells in this row. For each cell the following information are available:
+* formattedValue: This is what you see when you open Excel
+* comment: A comment for this cell
+* formula: A formula for this cell (Note: without the =, e.g. "A1+A2")
+* address: The address of the cell in A1 format (e.g. "B2")
+* sheetName: The name of the sheet of this cell
+
+ ```
+root                                                                                                                                                                                   
+ |-- rows: array (nullable = true)                                                                                                                                                     
+ |    |-- element: struct (containsNull = true)                                                                                                                                        
+ |    |    |-- formattedValue: string (nullable = true)                                                                                                                                
+ |    |    |-- comment: string (nullable = true)                                                                                                                                       
+ |    |    |-- formula: string (nullable = true)                                                                                                                                       
+ |    |    |-- address: string (nullable = true)                                                                                                                                       
+ |    |    |-- sheetName: string (nullable = true)                                                                                                                          
+ ```
+ 
 # Develop
 ## Reading
 tbd
