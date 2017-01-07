@@ -15,36 +15,19 @@
 **/
 package org.zuinnote.spark.office.excel
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.mapreduce.TaskAttemptContext
 
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.execution.datasources.{OutputWriter, OutputWriterFactory}
+import org.apache.spark.sql.types.StructType
 
-import org.zuinnote.hadoop.office.format.common._
-import org.zuinnote.hadoop.office.format.mapreduce._   
+private[excel] class ExcelOutputWriterFactory() extends OutputWriterFactory {
 
-   
-/**
-* Author: Jörn Franke <zuinnote@gmail.com>
-*
-*/
-
-
-
-package object excelFile {
-
-/**
-   * Adds a method, `excelFile`, to SQLContext that allows reading Excel data as rows
-   */
-
- implicit class ExcelContext(sqlContext: SQLContext) extends Serializable{
-def excelFile(
-        filePath: String,
-	hadoopParams: Map[String,String]
-       ): DataFrame = {
-      val excelRelation = ExcelRelation(filePath,hadoopParams)(sqlContext)
-      sqlContext.baseRelationToDataFrame(excelRelation)
-}
-}
-
-
-
+  def newInstance(
+      path: String,
+       bucketId: Option[Int],
+      dataSchema: StructType,
+      context: TaskAttemptContext): OutputWriter = {
+    new ExcelOutputWriter(path, dataSchema, context)
+  }
 }

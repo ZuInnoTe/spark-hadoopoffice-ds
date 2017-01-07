@@ -39,7 +39,9 @@ import org.apache.commons.logging.Log
 
 import org.zuinnote.hadoop.office.format.common.dao._
 import org.zuinnote.hadoop.office.format.mapreduce._   
-import org.zuinnote.spark.office.util.ExcelFile
+
+import org.zuinnote.spark.office.excel.util.ExcelFile
+
 
 /**
 * Author: Jörn Franke <zuinnote@gmail.com>
