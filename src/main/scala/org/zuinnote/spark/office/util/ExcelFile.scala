@@ -14,7 +14,7 @@
 * limitations under the License.
 **/
 
-package org.zuinnote.spark.office.util
+package org.zuinnote.spark.office.excel.util
 
 
 
@@ -24,7 +24,7 @@ import org.apache.hadoop.io.ArrayWritable
 import org.apache.hadoop.mapred.TextInputFormat
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SQLContext 
+import org.apache.spark.sql.{DataFrame, SaveMode, SQLContext}
 
 
 import org.apache.hadoop.io._
@@ -36,12 +36,18 @@ import org.apache.hadoop.fs.Path
 import org.zuinnote.hadoop.office.format.common.dao._
 import org.zuinnote.hadoop.office.format.mapreduce._   
 
-
-private[office] object ExcelFile {
+/**
+* This utility class supports loading and saving of Excel documents using the hadoopoffice fileformats. Please note that it uses the new mapreduce.* API (Similar to the Avro Spark datasource)
+*
+*
+*/
+private[excel] object ExcelFile {
  
   def load(context: SQLContext, location: String, conf: Map[String,String]): RDD[(Text,ArrayWritable)] = {
 	var hadoopConf = new Configuration()	
      	conf.foreach{ case (key,value) =>  hadoopConf.set("hadoopoffice."+key,value)} 
 	context.sparkContext.newAPIHadoopFile(location, classOf[ExcelFileInputFormat], classOf[Text], classOf[ArrayWritable], hadoopConf);
   }
+
+
 }
