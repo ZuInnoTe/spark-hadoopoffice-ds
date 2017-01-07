@@ -2,8 +2,10 @@ lazy val root = (project in file(".")).
   settings(
     organization := "com.github.zuinnote",
     name := "spark-hadoopoffice-ds",
-    version := "1.0.0"
+    version := "1.0.1"
   )
+
+resolvers += Resolver.mavenLocal
 
 publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.m2/repository")))
 
@@ -13,11 +15,11 @@ scalacOptions += "-target:jvm-1.7"
 
 libraryDependencies += "org.scala-lang" % "scala-library" % "2.11.7" % "provided"
 
-libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.0.0" % "compile"
+libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.0.1" % "compile"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "1.5.0" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.0" % "provided"
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.5.0" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0" % "provided"
 
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "2.7.0" % "provided"
 
