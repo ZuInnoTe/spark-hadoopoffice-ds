@@ -12,8 +12,8 @@ Find here the status from the Continuous Integration service: https://travis-ci.
 
 # Release Notes
 
-## Version 1.0.0
-Version based on hadoopoffice library 1.0.0 and the new mapreduce API via the [FileFormat API](https://github.com/apache/spark/blob/master/sql/core/src/main/scala/org/apache/spark/sql/execution/datasources/FileFormat.scala) of Spark datasources.
+## Version 1.0.1
+Version based on hadoopoffice library 1.0.1 and the new mapreduce API via the [FileFormat API](https://github.com/apache/spark/blob/master/sql/core/src/main/scala/org/apache/spark/sql/execution/datasources/FileFormat.scala) of Spark2 datasources.
 
 # Options
 All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format) are supported. However, in the datasource you specify them without the prefix hadoopoffice. For example, instead of "hadoopoffice.read.locale.bcp47" you need to specify the option as "read.locale.bcp47".
@@ -34,7 +34,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.10
 
-version: 1.0.0
+version: 1.0.1
 
 ## Scala 2.11
  
@@ -42,7 +42,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.0.0
+version: 1.0.1
 
 # Develop
 ## Reading
