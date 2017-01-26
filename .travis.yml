@@ -1,6 +1,12 @@
 language: scala
 scala:
-   - 2.10.5
-   - 2.11.7
+- 2.10.5
+- 2.11.7
 script:
-- sbt ++$TRAVIS_SCALA_VERSION test
+- sbt ++$TRAVIS_SCALA_VERSION clean coverage test
+- sbt ++$TRAVIS_SCALA_VERSION coverageReport
+- sbt ++$TRAVIS_SCALA_VERSION coverageAggregate
+- sbt ++$TRAVIS_SCALA_VERSION codacyCoverage
+env:
+  global:
+    secure: AdIBUkUOYfcZIOGC/E4nUONrcIdXPoPnIa1nI8YCrAQVQuW3ZrHk4ubEUQJqDzt+p2fVurTgbtn70EgoZSRdzzoRZ1DCHv0PODvTZuTcqzx6NKft9XjOotVvbII9MjFfX2BM599HVCnQrrhtz/HgGj6n6z2I0YTJfn6OgRD34uciQfqG38eeoOnbDefgUFbVJFBgkxge3zgMpFwKeXG8+CiaWGy75dPAAT01KZkxoH73FfU3+w0zn72lv/xcHHcPZGI2ltuEfIAq77kFUlcABTd1294c0+k0mXlHelWfJZBrTFCIzGiVWFcxYbDMu3V76m+64WcmgvGobUQeaw25jUtLYPG1AKrybw4qT4fCJUzso7GNCvRUtxio/+qhK55vn+CozxXAHc8/K6BJgPdTNEv5MRnVlHeh2exDAldMuOaWlBj8sOg5aHvz6Knpp1x7omODAHwaR+eV0K7vAhPpk+hA3bsmHAw8JiEyK52ixrZ264y68jdFYL7bh1op/Bnih7WUCP5Usa7gbZmOrsvcu5yCMgVACgRDgkUDFm6R/PSCV/WlNeWmb7+FlWAtHz4iZpG1JWIDvwSJKqk1NuHVtOy0Dn4yG1l8/gx59ebBMI9PxAnw40ziKM6q9y27rjANEQ7cCVwBJuGcjUgNd55V+rpCw6dJqZKa7enT8oSR1YY=
