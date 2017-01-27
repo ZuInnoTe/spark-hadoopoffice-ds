@@ -1,5 +1,6 @@
 # spark-hadoopoffice-ds
 [![Build Status](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds.svg?branch=master)](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ebd5a75819fb4636ad176f30078fd776)](https://www.codacy.com/app/jornfranke/spark-hadoopoffice-ds?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ZuInnoTe/spark-hadoopoffice-ds&amp;utm_campaign=Badge_Grade)
 
 A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the HadoopOffice library. This Spark datasource assumes at least Spark 2.0. Currently this datasource supports the following formats of the HadoopOffice library:
 
