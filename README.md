@@ -14,6 +14,8 @@ Find here the status from the Continuous Integration service: https://travis-ci.
 
 
 # Release Notes
+## Version 1.0.2
+Version based on hadoopoffice library 1.0.2 and added integration tests to ensure quality.
 
 ## Version 1.0.1
 Version based on hadoopoffice library 1.0.1 and the new mapreduce API via the [FileFormat API](https://github.com/apache/spark/blob/master/sql/core/src/main/scala/org/apache/spark/sql/execution/datasources/FileFormat.scala) of Spark2 datasources.
