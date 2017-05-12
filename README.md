@@ -5,8 +5,8 @@
 A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). This Spark datasource assumes at least Spark 2.0. Currently this datasource supports the following formats of the HadoopOffice library:
 
 * Excel
- * Datasource format: org.zuinnote.spark.office.Excel
- * Loading and Saving of old Excel (.xls) and new Excel (.xlsx)
+  * Datasource format: org.zuinnote.spark.office.Excel
+  * Loading and Saving of old Excel (.xls) and new Excel (.xlsx)
 
 This datasource is available on [Spark-packages.org](https://spark-packages.org/package/ZuInnoTe/spark-hadoopoffice-ds) and on [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Chadoopoffice).
 
