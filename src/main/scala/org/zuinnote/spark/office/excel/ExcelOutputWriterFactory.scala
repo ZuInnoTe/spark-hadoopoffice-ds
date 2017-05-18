@@ -21,6 +21,9 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext
 import org.apache.spark.sql.execution.datasources.{OutputWriter, OutputWriterFactory}
 import org.apache.spark.sql.types.StructType
 
+import org.zuinnote.hadoop.office.format.mapreduce.ExcelFileOutputFormat
+import org.zuinnote.hadoop.office.format.common.HadoopOfficeWriteConfiguration
+
 private[excel] class ExcelOutputWriterFactory() extends OutputWriterFactory {
 
   def newInstance(
@@ -30,4 +33,20 @@ private[excel] class ExcelOutputWriterFactory() extends OutputWriterFactory {
       context: TaskAttemptContext): OutputWriter = {
     new ExcelOutputWriter(path, dataSchema, context)
   }
+
+
+    def newInstance(
+        path: String,
+        dataSchema: StructType,
+        context: TaskAttemptContext): OutputWriter = {
+      new ExcelOutputWriter(path, dataSchema, context)
+    }
+
+  def getFileExtension(context: TaskAttemptContext): String = {
+  val conf=context.getConfiguration();
+	val defaultConf=conf.get(HadoopOfficeWriteConfiguration.CONF_MIMETYPE,ExcelFileOutputFormat.DEFAULT_MIMETYPE);
+	conf.set(HadoopOfficeWriteConfiguration.CONF_MIMETYPE,defaultConf);
+  ExcelFileOutputFormat.getSuffix(conf.get(HadoopOfficeWriteConfiguration.CONF_MIMETYPE))
+  }
+
 }
