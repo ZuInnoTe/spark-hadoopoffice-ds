@@ -14,6 +14,9 @@ Find here the status from the Continuous Integration service: https://travis-ci.
 
 
 # Release Notes
+## Version 1.0.3
+Version based on hadoopoffice library 1.0.3 and added support for Spark 2.1 (cf. [Issue 2](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/issues/2))
+
 ## Version 1.0.2
 Version based on hadoopoffice library 1.0.2 and added integration tests to ensure quality.
 
@@ -39,7 +42,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.10
 
-version: 1.0.2
+version: 1.0.3
 
 ## Scala 2.11
  
@@ -47,7 +50,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.0.2
+version: 1.0.3
 
 # Schema
 ## Excel File
