@@ -74,7 +74,7 @@ root
  
 # Develop
 ## Reading
-As you can see in the schema, the datasource reads each Excel row in an array. Each element of the array is a structure describe an Excel cell. This strucutre describes the formatted value (based on the locale), the comment, the formula, the address of the cell in A1 format and the name of the sheet to which the cell belongs. In Scala you can easily read Excel files using the following snippet:
+As you can see in the schema, the datasource reads each Excel row in an array. Each element of the array is a structure describing an Excel cell. This structure describes the formatted value (based on the locale), the comment, the formula, the address of the cell in A1 format and the name of the sheet to which the cell belongs. In Scala you can easily read Excel files using the following snippet:
 
  ```
 val sqlContext = sparkSession.sqlContext
