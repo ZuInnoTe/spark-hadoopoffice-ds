@@ -177,7 +177,13 @@ private[excel] class ExcelOutputWriter(
 			address=x.asInstanceOf[Seq[String]](3)
 			sheetName=x.asInstanceOf[Seq[String]](4)
 		}
-    
+    case _ => { 
+      formattedValue=""
+      comment=""
+      formula=""
+      address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
+      sheetName=defaultSheetName
+    }
 	}
 	// create SpreadSheetCellDAO
 	val currentSCD = new SpreadSheetCellDAO(formattedValue,comment,formula,address,sheetName)
