@@ -314,7 +314,7 @@ val df = Seq ((1000L, 2.1, "test"),(2000L,3.1,"test2")).toDF("column1","column2"
 When("store as Excel file on DFS")
 df.repartition(1).write
     .format("org.zuinnote.spark.office.excel")
-  .option("write.locale.bcp47", "de")
+  .option("write.locale.bcp47", "en")
   .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 
 Then("stored Excel file on DFS can be read correctly")
