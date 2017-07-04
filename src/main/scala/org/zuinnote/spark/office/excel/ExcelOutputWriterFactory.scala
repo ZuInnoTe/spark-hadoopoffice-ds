@@ -24,14 +24,14 @@ import org.apache.spark.sql.types.StructType
 import org.zuinnote.hadoop.office.format.mapreduce.ExcelFileOutputFormat
 import org.zuinnote.hadoop.office.format.common.HadoopOfficeWriteConfiguration
 
-private[excel] class ExcelOutputWriterFactory() extends OutputWriterFactory {
+private[excel] class ExcelOutputWriterFactory(options: Map[String, String]) extends OutputWriterFactory {
 
   def newInstance(
       path: String,
        bucketId: Option[Int],
       dataSchema: StructType,
       context: TaskAttemptContext): OutputWriter = {
-    new ExcelOutputWriter(path, dataSchema, context)
+    new ExcelOutputWriter(path, dataSchema, context, options)
   }
 
 
@@ -39,14 +39,15 @@ private[excel] class ExcelOutputWriterFactory() extends OutputWriterFactory {
         path: String,
         dataSchema: StructType,
         context: TaskAttemptContext): OutputWriter = {
-      new ExcelOutputWriter(path, dataSchema, context)
+      new ExcelOutputWriter(path, dataSchema, context, options)
     }
 
   def getFileExtension(context: TaskAttemptContext): String = {
-  val conf=context.getConfiguration();
-	val defaultConf=conf.get(HadoopOfficeWriteConfiguration.CONF_MIMETYPE,ExcelFileOutputFormat.DEFAULT_MIMETYPE);
-	conf.set(HadoopOfficeWriteConfiguration.CONF_MIMETYPE,defaultConf);
-  ExcelFileOutputFormat.getSuffix(conf.get(HadoopOfficeWriteConfiguration.CONF_MIMETYPE))
+     val conf=context.getConfiguration();
+	   val defaultConf=conf.get(HadoopOfficeWriteConfiguration.CONF_MIMETYPE,ExcelFileOutputFormat.DEFAULT_MIMETYPE);
+	   conf.set(HadoopOfficeWriteConfiguration.CONF_MIMETYPE,defaultConf);
+     ExcelFileOutputFormat.getSuffix(conf.get(HadoopOfficeWriteConfiguration.CONF_MIMETYPE))
   }
+
 
 }

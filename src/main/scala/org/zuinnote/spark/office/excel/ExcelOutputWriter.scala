@@ -41,15 +41,16 @@ import org.apache.commons.logging.Log
 private[excel] class ExcelOutputWriter(
     path: String,
     dataSchema: StructType,
-    context: TaskAttemptContext) extends OutputWriter  {
+    context: TaskAttemptContext, options: Map[String, String]) extends OutputWriter  {
   /**
    * Overrides the couple of methods responsible for generating the output streams / files so
    * that the data can be correctly partitioned
    */
+
   private val recordWriter: RecordWriter[NullWritable, SpreadSheetCellDAO] = new ExcelFileOutputFormat().getRecordWriter(context)
   private var currentRowNum: Int = 0;
-  private val defaultSheetName: String = context.getConfiguration().get("write.spark.defaultsheetname","Sheet1")
-  private var useHeader: Boolean = context.getConfiguration().getBoolean("write.spark.useHeader",false)
+  private val defaultSheetName: String = options.getOrElse("write.spark.defaultsheetname","Sheet1")
+  private var useHeader: Boolean = options.getOrElse("write.spark.useHeader","false").toBoolean
 
 /***
 * Writes a row to Excel.
@@ -68,6 +69,7 @@ private[excel] class ExcelOutputWriter(
       var i = 0
       for (x <- headers) {
        val headerColumnSCD = new SpreadSheetCellDAO(x,"","",MSExcelUtil.getCellAddressA1Format(currentRowNum,i),defaultSheetName)
+         recordWriter.write(NullWritable.get(),headerColumnSCD)
         i+=1
       }
       currentRowNum+=1
@@ -144,6 +146,16 @@ private[excel] class ExcelOutputWriter(
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}
+    case _: Double => {
+      formattedValue=""
+      comment=""
+      formula=""
+      if (x!=null) {
+         formula=x.toString
+      }
+      address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
+      sheetName=defaultSheetName
+    }
 		case _: String => {
 			formattedValue=x.toString
 			comment=""

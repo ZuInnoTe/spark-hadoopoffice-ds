@@ -54,7 +54,7 @@ import org.zuinnote.hadoop.office.format.mapreduce._
 
 import org.apache.commons.logging.LogFactory
 import org.apache.commons.logging.Log
-   
+
 /**
 * Author: Jörn Franke <zuinnote@gmail.com>
 *
@@ -89,28 +89,25 @@ val schema : StructType = StructType(Seq(StructField("rows",ArrayType(StructType
       options: Map[String, String],
 files: Seq[FileStatus]): Option[StructType] = {
 		Some(schema)
-	} 
+	}
 
 
 
-	
+
   /**
-   * Prepares a write job and returns an ExcelWriterFactory based on the hadoopoffice Excel input format. 
+   * Prepares a write job and returns an ExcelWriterFactory based on the hadoopoffice Excel input format.
    */
   override def prepareWrite(
       sparkSession: SparkSession,
       job: Job,
       options: Map[String, String],
 dataSchema: StructType): OutputWriterFactory = {
-		// prepare HadoopOptions
-	val conf = sparkSession.conf
-	 options.foreach{ 
-			case("mapreduce.output.fileoutputformat.compress",value) => conf.set("mapreduce.output.fileoutputformat.compress",value.toBoolean)
-			case("mapreduce.output.fileoutputformat.compress.codec",value) => conf.set("mapreduce.output.fileoutputformat.compress.codec",value)
-			case("write.spark.defaultsheetname",value) => conf.set("write.spark.defaultsheetname",value)
-			case (key,value) => conf.set("hadoopoffice."+key,value)
-	 }
-		new ExcelOutputWriterFactory()
+options.foreach{
+   case("mapreduce.output.fileoutputformat.compress",value) => sparkSession.conf.set("mapreduce.output.fileoutputformat.compress",value.toBoolean)
+   case("mapreduce.output.fileoutputformat.compress.codec",value) => sparkSession.conf.set("mapreduce.output.fileoutputformat.compress.codec",value)
+   case (key,value) => sparkSession.conf.set("hadoopoffice."+key,value)
+}
+		new ExcelOutputWriterFactory(options)
 	}
 
 
@@ -140,7 +137,7 @@ dataSchema: StructType): OutputWriterFactory = {
       options: Map[String, String],
       hadoopConf: Configuration): PartitionedFile => Iterator[InternalRow] = {
 	val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hadoopConf))
-      options.foreach{ 
+      options.foreach{
 			case (key,value) => broadcastedHadoopConf.value.value.set("hadoopoffice."+key,value)
       }
       (file: PartitionedFile) => {
@@ -180,20 +177,20 @@ dataSchema: StructType): OutputWriterFactory = {
 			InternalRow.fromSeq(primaryRowArray)
 
 			}
-		}	
+		}
       }
-		
+
   }
 
-	
 
 
- 
+
+
 }
 
 private[excel]
 class SerializableConfiguration(@transient var value: Configuration) extends Serializable {
- 
+
   private def writeObject(out: ObjectOutputStream): Unit =  {
     out.defaultWriteObject()
     value.write(out)
