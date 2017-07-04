@@ -55,6 +55,7 @@ import org.zuinnote.hadoop.office.format.common.dao.SpreadSheetCellDAO
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 
 import scala.collection.mutable.ArrayBuffer
@@ -122,6 +123,8 @@ override def beforeAll(): Unit = {
       .setAppName(this.getClass.getSimpleName)
 	sc = new SparkContext(sparkConf)
  }
+
+
 
 
   override def afterAll(): Unit = {
@@ -220,6 +223,7 @@ override def beforeAll(): Unit = {
 
 "A new Excel file" should "be created on DFS and reread correctly" in {
 	Given("In-memory data input")
+  dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
   val sqlContext=new SQLContext(sc)
   import sqlContext.implicits._
   val sRdd = sc.parallelize(Seq(Seq("","","1","A1","Sheet1"),Seq("","This is a comment","2","A2","Sheet1"),Seq("","","3","A3","Sheet1"),Seq("","","A2+A3","B1","Sheet1"))).repartition(1)
@@ -253,6 +257,91 @@ override def beforeAll(): Unit = {
   // check row 3
   assert("A3"==addresses(3).get(0))
   assert("3"==formattedValues(3).get(0))
+}
+
+
+"A new Excel file" should "be created on DFS with specified headers and reread" in {
+Given("In-memory data input")
+dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
+val sqlContext=new SQLContext(sc)
+import sqlContext.implicits._
+val sRdd = sc.parallelize(Seq(Seq("","","1","A2","Sheet1"),Seq("","This is a comment","2","A3","Sheet1"),Seq("","","3","A4","Sheet1"),Seq("","","A3+A4","B1","Sheet1"))).repartition(1)
+val columnNames = Seq("column1")
+
+val df= sRdd.toDF(columnNames: _*)
+
+When("store as Excel file on DFS")
+df.write
+    .format("org.zuinnote.spark.office.excel")
+  .option("write.locale.bcp47", "de")
+  .option("write.spark.useHeader",true)
+  .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+Then("stored Excel file on DFS can be read correctly")
+// fetch results
+val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+assert(4==dfIn.count)
+val rowsDF=dfIn.select(explode(dfIn("rows")).alias("rows"))
+val formattedValues = rowsDF.select("rows.formattedValue").collect
+val comments = rowsDF.select("rows.comment").collect
+val formulas = rowsDF.select("rows.formula").collect
+val addresses = rowsDF.select("rows.address").collect
+val sheetNames = rowsDF.select("rows.sheetName").collect
+// check data
+// check row 1
+assert("A1"==addresses(0).get(0))
+assert("column1"==formattedValues(0).get(0))
+assert("B1"==addresses(1).get(0))
+assert("5"==formattedValues(1).get(0))
+assert("A3+A4"==formulas(1).get(0))
+// check row 2
+assert("A2"==addresses(2).get(0))
+assert("1"==formattedValues(2).get(0))
+// check row 4
+assert("A3"==addresses(3).get(0))
+assert("2"==formattedValues(3).get(0))
+assert("This is a comment"==comments(3).get(0))
+// check row 5
+assert("A4"==addresses(4).get(0))
+assert("3"==formattedValues(4).get(0))
+}
+
+"A new Excel file" should "be created on DFS based on standard Spark datatypes and reread " in {
+Given("In-memory data input")
+dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
+val sqlContext=new SQLContext(sc)
+import sqlContext.implicits._
+val df = Seq ((1000L, 2.1, "test"),(2000L,3.1,"test2")).toDF("column1","column2","column3")
+When("store as Excel file on DFS")
+df.repartition(1).write
+    .format("org.zuinnote.spark.office.excel")
+  .option("write.locale.bcp47", "de")
+  .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+
+Then("stored Excel file on DFS can be read correctly")
+// fetch results
+val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+assert(2==dfIn.count)
+val rowsDF=dfIn.select(explode(dfIn("rows")).alias("rows"))
+val formattedValues = rowsDF.select("rows.formattedValue").collect
+val comments = rowsDF.select("rows.comment").collect
+val formulas = rowsDF.select("rows.formula").collect
+val addresses = rowsDF.select("rows.address").collect
+val sheetNames = rowsDF.select("rows.sheetName").collect
+// check data
+// check row 1
+assert("A1"==addresses(0).get(0))
+assert("1000"==formattedValues(0).get(0))
+assert("B1"==addresses(1).get(0))
+assert("2,1"==formattedValues(1).get(0))
+assert("C1"==addresses(2).get(0))
+assert("test"==formattedValues(2).get(0))
+// check row 2
+assert("A2"==addresses(3).get(0))
+assert("2000"==formattedValues(3).get(0))
+assert("B2"==addresses(4).get(0))
+assert("3,1"==formattedValues(4).get(0))
+assert("C2"==addresses(5).get(0))
+assert("test2"==formattedValues(5).get(0))
 }
 
 
