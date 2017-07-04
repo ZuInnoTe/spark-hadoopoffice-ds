@@ -31,7 +31,7 @@ import org.apache.spark.sql.types._
 
 import org.zuinnote.hadoop.office.format.common.dao.SpreadSheetCellDAO
 import org.zuinnote.hadoop.office.format.common.util.MSExcelUtil
-import org.zuinnote.hadoop.office.format.mapreduce._ 
+import org.zuinnote.hadoop.office.format.mapreduce._
 
 
 import org.apache.commons.logging.LogFactory
@@ -53,7 +53,7 @@ private[excel] class ExcelOutputWriter(
 /***
 * Writes a row to Excel.
 *
-* The data can either be of a 
+* The data can either be of a
 * primitive type (Boolean, Byte, Short, Integer, Float, String, BigDecimal, Date,TimeStamp). In this case each value is written in the same row in Excel
 * Seq of size five => All these five values are interpreted as Strings corresponding to the following fields in SpreadsheetCellDAO: formattedValue, comment, formula, address, sheetName
 *
@@ -78,14 +78,20 @@ private[excel] class ExcelOutputWriter(
   		case _: Boolean => {
 			formattedValue=""
 			comment=""
-			formula=x.toString
+      formula=""
+      if (x!=null) {
+			   formula=x.toString
+      }
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}
  	 	case _: Byte => {
 			formattedValue=""
 			comment=""
-			formula=x.toString
+      formula=""
+      if (x!=null) {
+         formula=x.toString
+      }
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}
@@ -99,14 +105,30 @@ private[excel] class ExcelOutputWriter(
 		case _: Integer => {
 			formattedValue=""
 			comment=""
-			formula=x.toString
+      formula=""
+      if (x!=null) {
+         formula=x.toString
+      }
+			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
+			sheetName=defaultSheetName
+		}
+    case _: Long => {
+			formattedValue=""
+			comment=""
+      formula=""
+      if (x!=null) {
+         formula=x.toString
+      }
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}
 		case _: Float => {
 			formattedValue=""
 			comment=""
-			formula=x.toString
+      formula=""
+      if (x!=null) {
+         formula=x.toString
+      }
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}
@@ -116,23 +138,32 @@ private[excel] class ExcelOutputWriter(
 			formula=""
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
-		} 
+		}
  		case _: BigDecimal => {
 			formattedValue=""
 			comment=""
-			formula=x.toString
+      formula=""
+      if (x!=null) {
+         formula=x.toString
+      }
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}
 		case _: Date => {
-			formattedValue=x.toString
+      formattedValue=""
+      if (formattedValue!=null) {
+			   formattedValue=x.toString
+      }
 			comment=""
 			formula=""
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}
 		case _: Timestamp => {
-			formattedValue=x.toString
+      formattedValue=""
+      if (formattedValue!=null) {
+        formattedValue=x.toString
+        }
 			comment=""
 			formula=""
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
@@ -146,6 +177,7 @@ private[excel] class ExcelOutputWriter(
 			address=x.asInstanceOf[Seq[String]](3)
 			sheetName=x.asInstanceOf[Seq[String]](4)
 		}
+    
 	}
 	// create SpreadSheetCellDAO
 	val currentSCD = new SpreadSheetCellDAO(formattedValue,comment,formula,address,sheetName)
@@ -155,7 +187,7 @@ private[excel] class ExcelOutputWriter(
     currentRowNum+=1
   }
 
-  override def close(): Unit = { 
+  override def close(): Unit = {
 	recordWriter.close(context)
 	currentRowNum=0;
    }
