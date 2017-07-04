@@ -49,6 +49,7 @@ private[excel] class ExcelOutputWriter(
   private val recordWriter: RecordWriter[NullWritable, SpreadSheetCellDAO] = new ExcelFileOutputFormat().getRecordWriter(context)
   private var currentRowNum: Int = 0;
   private val defaultSheetName: String = context.getConfiguration().get("write.spark.defaultsheetname","Sheet1")
+  private var useHeader: Boolean = context.getConfiguration().getBoolean("write.spark.useHeader",false)
 
 /***
 * Writes a row to Excel.
@@ -61,9 +62,20 @@ private[excel] class ExcelOutputWriter(
 *
 */
   override def write(row: Row): Unit = {
+   // check useHeader
+   if (useHeader) {
+      val headers = row.schema.fieldNames
+      var i = 0
+      for (x <- headers) {
+       val headerColumnSCD = new SpreadSheetCellDAO(x,"","",MSExcelUtil.getCellAddressA1Format(currentRowNum,i),defaultSheetName)
+        i+=1
+      }
+      currentRowNum+=1
+      useHeader=false
+   }
     // for each value in the row
     var currentColumnNum=0;
-    if (row.size==0) { // write empty colum
+    if (row.size==0) { // write empty cell / row
 	val emptySCD = new SpreadSheetCellDAO("","","",MSExcelUtil.getCellAddressA1Format(currentRowNum,0),defaultSheetName);
         recordWriter.write(NullWritable.get(),emptySCD)
     }
@@ -177,7 +189,7 @@ private[excel] class ExcelOutputWriter(
 			address=x.asInstanceOf[Seq[String]](3)
 			sheetName=x.asInstanceOf[Seq[String]](4)
 		}
-    case _ => { 
+    case _ => {
       formattedValue=""
       comment=""
       formula=""
