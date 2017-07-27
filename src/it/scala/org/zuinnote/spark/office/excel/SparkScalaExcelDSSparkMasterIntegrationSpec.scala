@@ -148,7 +148,7 @@ override def beforeAll(): Unit = {
 	Given("Excel 2013 test file on DFS")
 	// create input directory
 	dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
-	// copy bitcoin blocks
+	// copy test file
 	val classLoader = getClass().getClassLoader()
     	// put testdata on DFS
     	val fileName: String="excel2013test.xlsx"
@@ -314,12 +314,12 @@ val df = Seq ((1000L, 2.1, "test"),(2000L,3.1,"test2")).toDF("column1","column2"
 When("store as Excel file on DFS")
 df.repartition(1).write
     .format("org.zuinnote.spark.office.excel")
-  .option("write.locale.bcp47", "en")
+  .option("write.locale.bcp47", "de")
   .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 
 Then("stored Excel file on DFS can be read correctly")
 // fetch results
-val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "en").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 assert(2==dfIn.count)
 val rowsDF=dfIn.select(explode(dfIn("rows")).alias("rows"))
 val formattedValues = rowsDF.select("rows.formattedValue").collect
@@ -332,16 +332,33 @@ val sheetNames = rowsDF.select("rows.sheetName").collect
 assert("A1"==addresses(0).get(0))
 assert("1000"==formattedValues(0).get(0))
 assert("B1"==addresses(1).get(0))
-assert("2,1"==formattedValues(1).get(0))
+assert("2.1"==formattedValues(1).get(0))
 assert("C1"==addresses(2).get(0))
 assert("test"==formattedValues(2).get(0))
 // check row 2
 assert("A2"==addresses(3).get(0))
 assert("2000"==formattedValues(3).get(0))
 assert("B2"==addresses(4).get(0))
-assert("3,1"==formattedValues(4).get(0))
+assert("3.1"==formattedValues(4).get(0))
 assert("C2"==addresses(5).get(0))
 assert("test2"==formattedValues(5).get(0))
+}
+
+"An existing Excel file" should "be read in a dataframe with simple datatypes" in {
+// create input directory
+dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
+// copy test file
+val classLoader = getClass().getClassLoader()
+    // put testdata on DFS
+    val fileName: String="testsimple.xlsx"
+    val fileNameFullLocal=classLoader.getResource(fileName).getFile()
+    val inputFile=new Path(fileNameFullLocal)
+    dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+When("loaded by Excel data source")
+val sqlContext = new SQLContext(sc)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").option("read.spark.useHeader", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+
+Then("inferred schema is correct and data is correctly parsed")
 }
 
 
