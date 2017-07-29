@@ -28,6 +28,7 @@ import org.apache.hadoop.mapreduce._
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.TaskContext
+import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types.ArrayType
@@ -39,6 +40,7 @@ import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.DecimalType
+import org.apache.spark.sql.types.Decimal
 import org.apache.spark.sql.types.NumericType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
@@ -52,6 +54,8 @@ import org.apache.spark.sql.catalyst.CatalystTypeConverters
 import org.apache.spark.unsafe.types.UTF8String
 
 
+
+
 import java.io.IOException
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
@@ -63,8 +67,13 @@ import java.text.NumberFormat
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
 
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
+import scala.collection.mutable.ListBuffer
+
+import org.apache.poi.ss.util.CellAddress
 
 import org.zuinnote.hadoop.office.format.common.dao.SpreadSheetCellDAO
 import org.zuinnote.hadoop.office.format.common.HadoopOfficeReadConfiguration
@@ -88,8 +97,7 @@ import org.apache.commons.logging.Log
 private[excel] class DefaultSource
   extends FileFormat with DataSourceRegister
    {
-
- val LOG = LogFactory.getLog(classOf[DefaultSource])
+   val LOG = LogFactory.getLog(classOf[DefaultSource])
 val schema : StructType = StructType(Seq(StructField("rows",ArrayType(StructType(Seq(
 						StructField("formattedValue",StringType,true),
 						StructField("comment",StringType,true),
@@ -107,18 +115,21 @@ val schema : StructType = StructType(Seq(StructField("rows",ArrayType(StructType
       sparkSession: SparkSession,
       options: Map[String, String],
 files: Seq[FileStatus]): Option[StructType] = {
+
       // convert the Excel to a dataframe consisting of simple data types
       val simpleMode: Boolean = options.getOrElse("read.spark.simpleMode","false").toBoolean
       // use the first row of the Excel as header descriptors (only valid in simpleMode)
       val useHeader: Boolean = options.getOrElse("read.spark.useHeader","false").toBoolean
       val localeBCP47: String = options.getOrElse(HadoopOfficeReadConfiguration.CONF_LOCALE.substring("hadoopoffice.".length()),"")
+
     if (!simpleMode) {
+
     // normal mode
 		Some(schema)
     } else {
       // determine locale to interpret strings
-      var locale: Locale = Locale.getDefault() // if no locale is specified use the JVM locale
-      if (!("".equals(localeBCP47))) {
+      var locale: Locale = Locale.getDefault() // only for determining the datatype
+      if (!"".equals(localeBCP47)) {
           locale = new Locale.Builder().setLanguageTag(localeBCP47).build()
       }
       // use the correct conf
@@ -128,16 +139,19 @@ files: Seq[FileStatus]): Option[StructType] = {
           }
       // in simple mode scan through the Excel and determine the type / column
       var headers: Seq[String] = Seq()
-      var defaultRow: Seq[StructField] = Seq()
+      var defaultRow: ListBuffer[StructField] = new ListBuffer[StructField]()
       var defaultRowLength: Int = 0
       val file = files (0) // we scan only the first file
       // create a partitioned file
       val partFile = new PartitionedFile(null, file.getPath().toUri().toString(), 0, file.getLen(), Array.empty)
       val reader = new HadoopFileExcelReader(partFile, broadcastedHadoopConf.value.value)
-		 Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => reader.close()))
+    Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => reader.close()))
+
      var i = 0
-     reader.map { excelrow => // it is an arraywritable of SpreadSheetCellDAO
- 			{
+     for (excelrow <- reader) {
+
+
+
         val excelRowArray = excelrow.get
         if (excelRowArray.length>defaultRowLength) { // maybe a row is larger than we thought (e.g. if there are null values in the beginning)
           defaultRowLength=excelRowArray.length
@@ -146,11 +160,17 @@ files: Seq[FileStatus]): Option[StructType] = {
         for (x <-excelRowArray) { // parse through the SpreadSheetCellDAO
         var dataTypeFound=false
         if ((useHeader) && (i==0)) { // first row is the header. It is expected that it has the all columns that have data are filled
-            headers:+x.asInstanceOf[SpreadSheetCellDAO].getFormattedValue
+            headers=headers:+x.asInstanceOf[SpreadSheetCellDAO].getFormattedValue
         } else
           if (x!=null) {
             val currentSpreadSheetCellDAO: SpreadSheetCellDAO=x.asInstanceOf[SpreadSheetCellDAO]
-
+            j=new CellAddress(currentSpreadSheetCellDAO.getAddress()).getColumn()
+            if (j>=defaultRow.length) {
+                // fill up
+                for (x <- defaultRow.length to j) {
+                    defaultRow+=null
+                }
+            }
             // assumption: empty strings are null values
               if (!("".equals(currentSpreadSheetCellDAO.getFormattedValue))) {
               // determine column description
@@ -164,61 +184,67 @@ files: Seq[FileStatus]): Option[StructType] = {
             //  check if boolean
               if (("TRUE".equals(currentCellValue))||("FALSE".equals(currentCellValue))) {
                 dataTypeFound=true
-                if (defaultRow.length>j) { // check if previous assumption was boolean
+                if (defaultRow(j)!=null) { // check if previous assumption was boolean
                        val currentField = defaultRow(j)
                        if (!(currentField.dataType.isInstanceOf[BooleanType])) {
                            // if not then the type needs to be set to string
-                          defaultRow=defaultRow.updated(i,StructField(columnDescription,StringType,true))
+                          defaultRow(j)=StructField(columnDescription,StringType,true)
                        }
                       // if yes then nothing todo (already boolean)
 
                 } else { // we face this the first time
-                    defaultRow:+StructField(columnDescription,BooleanType,true)
+                    defaultRow(j)=StructField(columnDescription,BooleanType,true)
                 }
               }
             // check if date (note currently POI returns mm/dd/yyyy (US-Default))
             // in the future POI (might) change this, for which we an easily adapt by using another locale below
-            val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT,Locale.forLanguageTag("US"))
-            if (dateFormat.isInstanceOf[SimpleDateFormat]) {
+            val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT,Locale.US)
+            if ((!dataTypeFound) && (dateFormat.isInstanceOf[SimpleDateFormat])) {
 
               val sdf = dateFormat.asInstanceOf[SimpleDateFormat]
               val theDate = sdf.parse(currentCellValue, new ParsePosition(0))
               if (theDate!=null) { // we have indeed a date
+
               dataTypeFound=true
-                  if (defaultRow.length>j) { // check if previous assumption was date
+                  if (defaultRow(j)!=null) { // check if previous assumption was date
                     val currentField = defaultRow(j)
                     if (!(currentField.dataType.isInstanceOf[DateType])) {
                       // if not then the type needs to be set to string
-                     defaultRow=defaultRow.updated(i,StructField(columnDescription,StringType,true))
+                     defaultRow(j)=StructField(columnDescription,StringType,true)
                     }
                   }else { // we face this the first time
-                      defaultRow:+StructField(columnDescription,DateType,true)
+                      defaultRow(j)=StructField(columnDescription,DateType,true)
                   }
               }
             }
 
             // check if BigDecimal
-            val df = NumberFormat.getInstance(locale).asInstanceOf[DecimalFormat]
-            df.setParseBigDecimal(true)
-            val bd =  df.parse(currentCellValue,new ParsePosition(0)).asInstanceOf[BigDecimal].stripTrailingZeros()
-            if (bd!=null) {
+            val dForm = NumberFormat.getInstance(locale)
+            dForm.asInstanceOf[DecimalFormat].setParseBigDecimal(true)
+            val bd  =  dForm.asInstanceOf[DecimalFormat].parse(currentCellValue,new ParsePosition(0))
+            if ((!dataTypeFound) && (bd!=null)) {
+              val bdv : BigDecimal = bd.asInstanceOf[BigDecimal].stripTrailingZeros()
+
               dataTypeFound=true
-              if (defaultRow.length>j) { // check if previous assumption was a number
+
+              if (defaultRow(j)!=null) { // check if previous assumption was a number
                      val currentField = defaultRow(j)
                      // check if we need to upgrade to decimal
-                     if ((bd.scale>0) && (currentField.dataType.isInstanceOf[NumericType])) {
+                     if ((bdv.scale>0) && (currentField.dataType.isInstanceOf[NumericType])) {
                               // upgrade to decimal, if necessary
                               if (!(currentField.dataType.isInstanceOf[DecimalType])) {
-                                  defaultRow=defaultRow.updated(i,StructField(columnDescription,DataTypes.createDecimalType(bd.precision,bd.scale),true))
+                                  defaultRow(j)=StructField(columnDescription,DataTypes.createDecimalType(bdv.precision,bdv.scale),true)
                               } else {
-                                if ((bd.scale > currentField.dataType.asInstanceOf[DecimalType].scale) && (bd.precision>currentField.dataType.asInstanceOf[DecimalType].precision)){
-                                  defaultRow=defaultRow.updated(i,StructField(columnDescription,DataTypes.createDecimalType(bd.precision,bd.scale),true))
-                                } else if (bd.scale > currentField.dataType.asInstanceOf[DecimalType].scale) {
+                                if ((bdv.scale > currentField.dataType.asInstanceOf[DecimalType].scale) && (bdv.precision>currentField.dataType.asInstanceOf[DecimalType].precision)){
+                                  defaultRow(j)=StructField(columnDescription,DataTypes.createDecimalType(bdv.precision,bdv.scale),true)
+                                } else if (bdv.scale > currentField.dataType.asInstanceOf[DecimalType].scale) {
                                       // upgrade scale
-                                      defaultRow=defaultRow.updated(i,StructField(columnDescription,DataTypes.createDecimalType(currentField.dataType.asInstanceOf[DecimalType].precision,bd.scale),true))
-                                } else if (bd.precision>currentField.dataType.asInstanceOf[DecimalType].precision) {
+                                      defaultRow(j)=StructField(columnDescription,DataTypes.createDecimalType(currentField.dataType.asInstanceOf[DecimalType].precision,bdv.scale),true)
+                                } else if (bdv.precision>currentField.dataType.asInstanceOf[DecimalType].precision) {
                                   // upgrade precision
-                                  defaultRow=defaultRow.updated(i,StructField(columnDescription,DataTypes.createDecimalType(bd.precision,currentField.dataType.asInstanceOf[DecimalType].scale),true))
+                                  // new precision is needed to extend to max scale
+                                  val newpre = bdv.precision+(currentField.dataType.asInstanceOf[DecimalType].scale-bdv.scale)
+                                  defaultRow(j)=StructField(columnDescription,DataTypes.createDecimalType(newpre,currentField.dataType.asInstanceOf[DecimalType].scale),true)
                                 }
                               }
                       } else { // check if we need to upgrade one of the integer types
@@ -228,30 +254,33 @@ files: Seq[FileStatus]): Option[StructType] = {
                            var isInt=false
                            var isLong=true
                            try {
-                                bd.longValueExact()
+                                bdv.longValueExact()
                                 isLong=true
-                                bd.intValueExact()
+                                bdv.intValueExact()
                                 isInt=true
-                                bd.shortValueExact()
+                                bdv.shortValueExact()
                                 isShort=true
-                                bd.byteValueExact()
+                                bdv.byteValueExact()
                                 isByte=true
+                           } catch{
+
+                             case e: Exception => LOG.debug("Possible data types: Long: "+isLong+" Int: "+isInt+" Short: "+isShort+" Byte: "+isByte)
                            }
                            // if it was Numeric before we can ignore testing the byte case, here just for completeness
                            if ((isByte) && ((currentField.dataType.isInstanceOf[ByteType]) || (currentField.dataType.isInstanceOf[ShortType])|| (currentField.dataType.isInstanceOf[IntegerType])|| (currentField.dataType.isInstanceOf[LongType]))) {
-                            // if it was Numeric before we can ignore testing the byte case, here just for completeness
+                            // if it was Byte before we can ignore testing the byte case, here just for completeness
                            } else
-                           if ((isShort) && (!(currentField.dataType.isInstanceOf[ShortType])|| !(currentField.dataType.isInstanceOf[IntegerType])|| !(currentField.dataType.isInstanceOf[LongType]))) {
+                           if ((isShort) && ((currentField.dataType.isInstanceOf[ByteType]))) {
                               // upgrade to short
-                              defaultRow=defaultRow.updated(i,StructField(columnDescription,DataTypes.ShortType,true))
+                              defaultRow(j)=StructField(columnDescription,DataTypes.ShortType,true)
                            } else
-                           if ((isInt) && (!(currentField.dataType.isInstanceOf[IntegerType])|| !(currentField.dataType.isInstanceOf[LongType]))) {
+                           if ((isInt) && ((currentField.dataType.isInstanceOf[ShortType])|| (currentField.dataType.isInstanceOf[ByteType]))) {
                               // upgrade to integer
-                              defaultRow=defaultRow.updated(i,StructField(columnDescription,DataTypes.IntegerType,true))
+                              defaultRow(j)=StructField(columnDescription,DataTypes.IntegerType,true)
                            } else
-                           if ((isLong) && (!(currentField.dataType.isInstanceOf[LongType]))) {
+                           if ((!isByte) && (!isShort) && (!isInt) && !((currentField.dataType.isInstanceOf[LongType]))) {
                               // upgrade to integer
-                              defaultRow=defaultRow.updated(i,StructField(columnDescription,DataTypes.LongType,true))
+                              defaultRow(j)=StructField(columnDescription,DataTypes.LongType,true)
                            }
 
 
@@ -260,31 +289,34 @@ files: Seq[FileStatus]): Option[StructType] = {
                      } else {
                         // we face it for the first time
                         // determine value type
-                        if (bd.scale>0) {
-                          defaultRow:+StructField(columnDescription,DataTypes.createDecimalType(bd.precision,bd.scale),true)
+                        if (bdv.scale>0) {
+                          defaultRow(j)=StructField(columnDescription,DataTypes.createDecimalType(bdv.precision,bdv.scale),true)
                         } else {
                           var isByte=false
                           var isShort=false
                           var isInt=false
                           var isLong=true
                           try {
-                               bd.longValueExact()
+                               bdv.longValueExact()
                                isLong=true
-                               bd.intValueExact()
+                               bdv.intValueExact()
                                isInt=true
-                               bd.shortValueExact()
+                               bdv.shortValueExact()
                                isShort=true
-                               bd.byteValueExact()
+                               bdv.byteValueExact()
                                isByte=true
+                          } catch{
+
+                            case e: Exception => LOG.debug("Possible data types: Long: "+isLong+" Int: "+isInt+" Short: "+isShort+" Byte: "+isByte)
                           }
                           if (isByte) {
-                            defaultRow:+StructField(columnDescription,DataTypes.ByteType,true)
+                            defaultRow(j)=StructField(columnDescription,DataTypes.ByteType,true)
                           } else if (isShort) {
-                            defaultRow:+StructField(columnDescription,DataTypes.ShortType,true)
+                            defaultRow(j)=StructField(columnDescription,DataTypes.ShortType,true)
                           } else if (isInt) {
-                            defaultRow:+StructField(columnDescription,DataTypes.IntegerType,true)
+                            defaultRow(j)=StructField(columnDescription,DataTypes.IntegerType,true)
                           } else if (isLong) {
-                            defaultRow:+StructField(columnDescription,DataTypes.LongType,true)
+                            defaultRow(j)=StructField(columnDescription,DataTypes.LongType,true)
                           }
                         }
                      }
@@ -292,9 +324,9 @@ files: Seq[FileStatus]): Option[StructType] = {
                    if (!dataTypeFound) {
                    // otherwise string
                      if (defaultRow.length>j) {
-                       defaultRow=defaultRow.updated(i,StructField(columnDescription,StringType,true))
+                       defaultRow(j)=StructField(columnDescription,StringType,true)
                      }  else { // we face this the first time
-                         defaultRow:+StructField(columnDescription,StringType,true)
+                         defaultRow(j)=StructField(columnDescription,StringType,true)
                      }
                     }
 
@@ -303,19 +335,20 @@ files: Seq[FileStatus]): Option[StructType] = {
           } else { // ignore nulls for schema
 
           }
-          j+=1 // next column
+
         }
 
-        i+=1 // next row
-      }
 
       }
+      i+=1 // next row
 
+      }
 
+      Some(StructType(defaultRow.toSeq))
 	}
-  Some(StructType(defaultRow))
+
   }
-  }
+
 
 
 
@@ -370,9 +403,21 @@ options.foreach{
       val simpleMode: Boolean = options.getOrElse("read.spark.simpleMode","false").toBoolean
       // use the first row of the Excel as header descriptors (only valid in simpleMode)
       var useHeader: Boolean = options.getOrElse("read.spark.useHeader","false").toBoolean
+      // locale for interpreting numbers etc.
+      val localeBCP47: String = options.getOrElse(HadoopOfficeReadConfiguration.CONF_LOCALE.substring("hadoopoffice.".length()),"")
+      var locale: Locale = Locale.getDefault() // only for determining the datatype
+      if (!"".equals(localeBCP47)) {
+          locale = new Locale.Builder().setLanguageTag(localeBCP47).build()
+      }
       (file: PartitionedFile) => {
 		  val reader = new HadoopFileExcelReader(file, broadcastedHadoopConf.value.value)
 		 Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => reader.close()))
+     if ((simpleMode) && (useHeader)) {
+        // skip header
+        if (reader.hasNext) {
+          reader.next
+        }
+     }
 		reader.map { excelrow => // it is an arraywritable of SpreadSheetCellDAO
 			{ if (!simpleMode) { // SpreadSheetCellDAO mode
     			val excelRowArray = excelrow.get
@@ -406,20 +451,75 @@ options.foreach{
     			primaryRowArray(0)=new GenericArrayData(rowArray)
     			InternalRow.fromSeq(primaryRowArray)
       }   else {
-          // simpleMode
-          // check if skip header
-          if (useHeader) {
-            useHeader=false
-            // skip row
-          } else {
+
+            val excelRowArray = excelrow.get
             // get datatype from schema
             //dataSchema
-            InternalRow.fromSeq(Seq())
+            //dataschema.
+            var rowData: Seq[Any] = Seq()
+            var j = 0;
+            for (x <-excelRowArray) { // parse through the SpreadSheetCellDAO
+              if (x!=null) {
+                  val currentCellValue = x.asInstanceOf[SpreadSheetCellDAO].getFormattedValue
+                  val currentDataType=dataSchema.fields(j).dataType
+
+                  if ("".equals(currentCellValue)) {
+                      rowData=rowData:+null
+                  } else if (currentDataType.isInstanceOf[BooleanType]) {
+                      rowData=rowData:+currentCellValue.toBoolean
+                  } else if (currentDataType.isInstanceOf[DateType]) {
+                      val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT,Locale.US)
+                      val sdf = dateFormat.asInstanceOf[SimpleDateFormat]
+                      val theDate = sdf.parse(currentCellValue, new ParsePosition(0))
+                      if (theDate!=null) {
+
+                        rowData=rowData:+DateTimeUtils.millisToDays(theDate.getTime())
+                      } else {
+                          rowData=rowData:+null
+                      }
+                  } else if (currentDataType.isInstanceOf[NumericType]) {
+
+                    val dForm = NumberFormat.getInstance(locale)
+                    dForm.asInstanceOf[DecimalFormat].setParseBigDecimal(true)
+                    val bd  =  dForm.asInstanceOf[DecimalFormat].parse(currentCellValue,new ParsePosition(0))
+                    if (bd!=null) {
+                        val bdv : BigDecimal = bd.asInstanceOf[BigDecimal].stripTrailingZeros()
+                      if (currentDataType.isInstanceOf[ByteType]) {
+                        rowData=rowData:+bdv.byteValueExact
+                      } else if (currentDataType.isInstanceOf[ShortType]) {
+                        rowData=rowData:+bdv.shortValueExact
+                      } else if (currentDataType.isInstanceOf[IntegerType]) {
+                        rowData=rowData:+bdv.intValueExact
+                      } else if (currentDataType.isInstanceOf[LongType]) {
+                        rowData=rowData:+bdv.longValueExact
+                      } else if (currentDataType.isInstanceOf[DecimalType]) {
+                          val currentDT = currentDataType.asInstanceOf[DecimalType]
+                          val sparkDecimal: Decimal = new Decimal()
+                          sparkDecimal.set(new scala.math.BigDecimal(bdv))
+                          rowData=rowData:+sparkDecimal
+                        }
+                      } else {
+                        rowData=rowData:+null
+                      }
+
+                  }else if (currentDataType.isInstanceOf[StringType]) {
+                    rowData=rowData:+UTF8String.fromString(currentCellValue)
+                  }  else {
+                      throw new InterruptedException("Do not know how to handle datatype")
+                  }
+      		     } else {
+                //
+                rowData=rowData:+null
+               }
+               j+=1
+            }
+
+
+            InternalRow.fromSeq(rowData)
           }
-          InternalRow.fromSeq(Seq())
 
       }
-			}
+
 		}
       }
 

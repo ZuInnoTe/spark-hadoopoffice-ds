@@ -146,6 +146,7 @@ override def beforeAll(): Unit = {
 
 "The test excel file" should "be fully read with the input data source" in {
 	Given("Excel 2013 test file on DFS")
+  dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
 	// create input directory
 	dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
 	// copy test file
@@ -345,6 +346,8 @@ assert("test2"==formattedValues(5).get(0))
 }
 
 "An existing Excel file" should "be read in a dataframe with simple datatypes" in {
+
+dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
 // create input directory
 dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
 // copy test file
@@ -357,8 +360,51 @@ val classLoader = getClass().getClassLoader()
 When("loaded by Excel data source")
 val sqlContext = new SQLContext(sc)
 val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").option("read.spark.useHeader", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
-
 Then("inferred schema is correct and data is correctly parsed")
+// check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
+assert(9==df.schema.fields.length)
+// check columns correctly read
+assert("decimalsc1"==df.columns(0))
+assert("booleancolumn"==df.columns(1))
+assert("datecolumn"==df.columns(2))
+assert("stringcolumn"==df.columns(3))
+assert("decimalp8sc3"==df.columns(4))
+assert("bytecolumn"==df.columns(5))
+assert("shortcolumn"==df.columns(6))
+assert("intcolumn"==df.columns(7))
+assert("longcolumn"==df.columns(8))
+// check data types
+assert(true==df.schema.fields(0).dataType.isInstanceOf[DecimalType])
+assert(2==df.schema.fields(0).dataType.asInstanceOf[DecimalType].precision)
+assert(1==df.schema.fields(0).dataType.asInstanceOf[DecimalType].scale)
+assert(true==df.schema.fields(1).dataType.isInstanceOf[BooleanType])
+assert(true==df.schema.fields(2).dataType.isInstanceOf[DateType])
+assert(true==df.schema.fields(3).dataType.isInstanceOf[StringType])
+assert(true==df.schema.fields(4).dataType.isInstanceOf[DecimalType])
+assert(8==df.schema.fields(4).dataType.asInstanceOf[DecimalType].precision)
+assert(3==df.schema.fields(4).dataType.asInstanceOf[DecimalType].scale)
+assert(true==df.schema.fields(5).dataType.isInstanceOf[ByteType])
+assert(true==df.schema.fields(6).dataType.isInstanceOf[ShortType])
+assert(true==df.schema.fields(7).dataType.isInstanceOf[IntegerType])
+assert(true==df.schema.fields(8).dataType.isInstanceOf[LongType])
+// check data
+//val decimalsc1 = df.select("decimalsc1").collect
+//val booleancolumn = df.select("booleancolumn").collect
+//val datecolumn = df.select("datecolumn").collect
+//val stringcolumn = df.select("stringcolumn").collect
+//val decimalp8sc3 = df.select("decimalp8sc3").collect
+//val bytecolumn = df.select("bytecolumn").collect
+//val shortcolumn = df.select("shortcolumn").collect
+//val intcolumn = df.select("intcolumn").collect
+//val longcolumn = df.select("longcolumn").collect
+// check data
+// check row 1
+//df.select("decimalsc1").show
+df.printSchema
+df.select("stringcolumn").show
+df.show
+//assert(new scala.math.BigDecimal(new java.math.BigDecimal("1.0"))==decimalsc1(0).get(0))
+
 }
 
 
