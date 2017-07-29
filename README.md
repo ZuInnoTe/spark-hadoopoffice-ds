@@ -74,13 +74,13 @@ root
  
 # Develop
 ## Reading
-As you can see in the schema, the datasource reads each Excel row in an array. Each element of the array is a structure describing an Excel cell. This structure describes the formatted value (based on the locale), the comment, the formula, the address of the cell in A1 format and the name of the sheet to which the cell belongs. In Scala you can easily read Excel files using the following snippet:
+As you can see in the schema, the datasource reads each Excel row in an array. Each element of the array is a structure describing an Excel cell. This structure describes the formatted value (based on the locale), the comment, the formula, the address of the cell in A1 format and the name of the sheet to which the cell belongs. In Scala you can easily read Excel files using the following snippet (assuming US locale for the Excel file):
 
  ```
 val sqlContext = sparkSession.sqlContext
 val df = sqlContext.read
     .format("org.zuinnote.spark.office.excel")
-    .option("read.locale.bcp47", "de")  
+    .option("read.locale.bcp47", "us")  
 .load(args(0))
 ```
 Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API). 
@@ -89,26 +89,26 @@ You can have two options for writing data to Excel files:
 * You can have a dataframe with columns of simple datatypes (no map, no list, no struct) that should be written in rows of an Excel sheet. You can define the sheetname by using the option "write.spark.defaultsheetname" (default is "Sheet1"). In this way, you can only write values, but no formulas, comments etc.
 * You can have a dataframe with arrays where each element corresponds to the schema defined above. In this case you have full control where the data ends, you can use formulas, comments etc.
 
-The second option is illustrated in this snippet. It creates a simple Excel document with 4 cells. They are stored in sheet "Sheet1". The following Cells exist (A1 with value 1), (A2 with value 2 and comment), (A3 with value 3), (B1 with formula A2+A3). The resulting Excel file is stored in the directory /home/user/office/output
+The second option is illustrated in this snippet (Assuming US locale for the Excel). It creates a simple Excel document with 4 cells. They are stored in sheet "Sheet1". The following Cells exist (A1 with value 1), (A2 with value 2 and comment), (A3 with value 3), (B1 with formula A2+A3). The resulting Excel file is stored in the directory /home/user/office/output
  ```
 val sRdd = sparkSession.sparkContext.parallelize(Seq(Seq("","","1","A1","Sheet1"),Seq("","This is a comment","2","A2","Sheet1"),Seq("","","3","A3","Sheet1"),Seq("","","A2+A3","B1","Sheet1"))).repartition(1)
 	val df= sRdd.toDF()
 	df.write
       .format("org.zuinnote.spark.office.excel")
-    .option("write.locale.bcp47", "de") 
+    .option("write.locale.bcp47", "us") 
 .save("/home/user/office/output")
 ```
 Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-an-Excel-document-using-the-Spark2-datasource-API).
 # Language bindings
 ## Scala
- This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format) and shows the total number of rows, the schema and the first 20 rows. The locale for formatting cell values is set to "de". Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API). 
+ This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format) and shows the total number of rows, the schema and the first 20 rows. The locale for formatting cell values is set to "us". Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API). 
 
 
  ```
 val sqlContext = sparkSession.sqlContext
 val df = sqlContext.read
     .format("org.zuinnote.spark.office.excel")
-    .option("read.locale.bcp47", "de")  // example to set the locale to de
+    .option("read.locale.bcp47", "us")  // example to set the locale to us
     .load("/home/user/office/input")
 	val totalCount = df.count
 	// print to screen
@@ -118,12 +118,12 @@ val df = sqlContext.read
 df.show 
 ```
 ## Java
-  This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format) and shows the total number of rows, the schema and the first 20 rows. The locale for formatting cell values is set to "de".
+  This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format) and shows the total number of rows, the schema and the first 20 rows. The locale for formatting cell values is set to "us".
  ```
  SQLContext sqlContext = sparkSession.sqlContext;
  Dataframe df = sqlContext.read
  .format("org.zuinnote.spark.office.excel")
-    .option("read.locale.bcp47", "de")  // example to set the locale to de
+    .option("read.locale.bcp47", "us")  // example to set the locale to us
     .load("/home/user/office/input");
  	long totalCount = df.count;
 	// print to screen
@@ -134,28 +134,28 @@ df.show();
 
 ```
 ## R
-   This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format). The locale for formatting cell values is set to "de".
+   This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format). The locale for formatting cell values is set to "us".
 ```
 library(SparkR)
 
 Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.0.2" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
-df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "de")
+df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "us")
  ```
 ## Python
-This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format).The locale for formatting cell values is set to "de".
+This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format).The locale for formatting cell values is set to "us".
 ```
 from pyspark.sql import SQLContext
 sqlContext = SQLContext(sc)
 
-df = sqlContext.read.format('org.zuinnote.spark.office.excel').options('read.locale.bcp47'='de').load('/home/user/office/input')
+df = sqlContext.read.format('org.zuinnote.spark.office.excel').options('read.locale.bcp47'='us').load('/home/user/office/input')
 ```
 ## SQL
-The following statement creates a table that contains Excel data in the folder //home/user/office/input. The locale for formatting cell values is set to "de".
+The following statement creates a table that contains Excel data in the folder //home/user/office/input. The locale for formatting cell values is set to "us".
 ```
 CREATE TABLE ExcelData
 USING  org.zuinnote.spark.office.excel
-OPTIONS (path "/home/user/office/input", read.locale.bcp47 "de")
+OPTIONS (path "/home/user/office/input", read.locale.bcp47 "us")
 ```
 
