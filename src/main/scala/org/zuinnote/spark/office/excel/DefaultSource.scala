@@ -106,7 +106,7 @@ val schema : StructType = StructType(Seq(StructField("rows",ArrayType(StructType
 						StructField("sheetName",StringType,false)
 				))),true)))
   /**
-   * Short alias for hadoopcryptoledger BitcoinBlock data source.
+   * Short alias for hadoopoffice data source.
    */
   override def shortName(): String = "excelFile"
 
@@ -361,11 +361,11 @@ files: Seq[FileStatus]): Option[StructType] = {
       job: Job,
       options: Map[String, String],
 dataSchema: StructType): OutputWriterFactory = {
-options.foreach{
-   case("mapreduce.output.fileoutputformat.compress",value) => sparkSession.conf.set("mapreduce.output.fileoutputformat.compress",value.toBoolean)
-   case("mapreduce.output.fileoutputformat.compress.codec",value) => sparkSession.conf.set("mapreduce.output.fileoutputformat.compress.codec",value)
-   case (key,value) => sparkSession.conf.set("hadoopoffice."+key,value)
-}
+    options.foreach{
+       case("mapreduce.output.fileoutputformat.compress",value) => sparkSession.conf.set("mapreduce.output.fileoutputformat.compress",value.toBoolean)
+       case("mapreduce.output.fileoutputformat.compress.codec",value) => sparkSession.conf.set("mapreduce.output.fileoutputformat.compress.codec",value)
+       case (key,value) => sparkSession.conf.set("hadoopoffice."+key,value)
+       }
 		new ExcelOutputWriterFactory(options)
 	}
 
@@ -453,12 +453,23 @@ options.foreach{
       }   else {
 
             val excelRowArray = excelrow.get
-            // get datatype from schema
-            //dataSchema
-            //dataschema.
+
             var rowData: Seq[Any] = Seq()
-            var j = 0;
-            for (x <-excelRowArray) { // parse through the SpreadSheetCellDAO
+            // parse only the columns in required schema
+            for (col <- requiredSchema.fields) {
+             // find out at which position in the schema that field is
+             var i=0
+             var j=0
+             for (colCandidate <- dataSchema.fields) {
+                if (col.name.equals(colCandidate.name)) {
+                  j=i
+                }
+                i+=1
+             }
+             var x: SpreadSheetCellDAO=null
+              if (j<excelRowArray.length) {
+                x= excelRowArray(j).asInstanceOf[SpreadSheetCellDAO]
+              }
               if (x!=null) {
                   val currentCellValue = x.asInstanceOf[SpreadSheetCellDAO].getFormattedValue
                   val currentDataType=dataSchema.fields(j).dataType
@@ -511,13 +522,8 @@ options.foreach{
                 //
                 rowData=rowData:+null
                }
-               j+=1
-            }
-
-
-            InternalRow.fromSeq(rowData)
           }
-
+          InternalRow.fromSeq(rowData)
       }
 
 		}
@@ -526,9 +532,7 @@ options.foreach{
   }
 
 
-
-
-
+}
 }
 
 private[excel]
