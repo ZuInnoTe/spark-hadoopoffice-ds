@@ -25,6 +25,7 @@ import org.apache.hadoop.io.ArrayWritable
 import org.apache.hadoop.mapreduce.RecordWriter
 import org.apache.hadoop.mapreduce.TaskAttemptContext
 
+import org.apache.spark.sql.catalyst.{CatalystTypeConverters, InternalRow}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.execution.datasources.OutputWriter
 import org.apache.spark.sql.types._
@@ -51,9 +52,28 @@ private[excel] class ExcelOutputWriter(
   private var currentRowNum: Int = 0;
   private val defaultSheetName: String = options.getOrElse("write.spark.defaultsheetname","Sheet1")
   private var useHeader: Boolean = options.getOrElse("write.spark.useHeader","false").toBoolean
+  private var converter: InternalRow => Row = _
+  converter =    CatalystTypeConverters.createToScalaConverter(dataSchema).asInstanceOf[InternalRow => Row]
 
 /***
-* Writes a row to Excel.
+*
+* Writes a row to Excel (Spark 2.2)
+*
+* The data can either be of a
+* primitive type (Boolean, Byte, Short, Integer, Float, String, BigDecimal, Date,TimeStamp). In this case each value is written in the same row in Excel
+* Seq of size five => All these five values are interpreted as Strings corresponding to the following fields in SpreadsheetCellDAO: formattedValue, comment, formula, address, sheetName
+*
+* Note: It is experimental to mix primitive type and SpreadSheetCellDAOs in one or more Rows
+*
+***/
+def write(row: InternalRow): Unit = {
+  write(converter(row))
+}
+
+
+
+/***
+* Writes a row to Excel. Spark 2.0 and 2.1
 *
 * The data can either be of a
 * primitive type (Boolean, Byte, Short, Integer, Float, String, BigDecimal, Date,TimeStamp). In this case each value is written in the same row in Excel
@@ -62,7 +82,7 @@ private[excel] class ExcelOutputWriter(
 * Note: It is experimental to mix primitive type and SpreadSheetCellDAOs in one or more Rows
 *
 */
-  override def write(row: Row): Unit = {
+   def write(row: Row): Unit = {
    // check useHeader
    if (useHeader) {
       val headers = row.schema.fieldNames
