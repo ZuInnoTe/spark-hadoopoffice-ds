@@ -18,6 +18,10 @@ package org.zuinnote.spark.office.excel
 import java.math.BigDecimal
 import java.sql.Date
 import java.sql.Timestamp
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.NullWritable
@@ -132,7 +136,10 @@ def write(row: InternalRow): Unit = {
 		case _: Short => {
 			formattedValue=""
 			comment=""
-			formula=x.toString
+      formula=""
+      if (x!=null) {
+			   formula=x.toString
+      }
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}
@@ -195,21 +202,25 @@ def write(row: InternalRow): Unit = {
 		}
 		case _: Date => {
       formattedValue=""
-      if (formattedValue!=null) {
-			   formattedValue=x.toString
+      if (x!=null) {
+          // cf. http://poi.apache.org/spreadsheet/quick-guide.html#CreateDateCells
+          val sdf = new SimpleDateFormat("MM/dd/yy")
+          formattedValue = sdf.format(x.asInstanceOf[java.sql.Date])
       }
 			comment=""
 			formula=""
+
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}
 		case _: Timestamp => {
       formattedValue=""
-      if (formattedValue!=null) {
-        formattedValue=x.toString
-        }
+
 			comment=""
 			formula=""
+      if (x!=null) {
+        formula=x.toString
+        }
 			address=MSExcelUtil.getCellAddressA1Format(currentRowNum,currentColumnNum)
 			sheetName=defaultSheetName
 		}

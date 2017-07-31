@@ -477,4 +477,140 @@ assert(10==longcolumn(5).get(0))
 }
 
 
+"An existing Excel file" should "be read in a dataframe with simple datatypes, written in a new file and re-read again" in {
+
+dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
+dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
+// create input directory
+dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
+// copy test file
+val classLoader = getClass().getClassLoader()
+    // put testdata on DFS
+    val fileName: String="testsimple.xlsx"
+    val fileNameFullLocal=classLoader.getResource(fileName).getFile()
+    val inputFile=new Path(fileNameFullLocal)
+    dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+When("loaded by Excel data source and written back")
+val sqlContext = new SQLContext(sc)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").option("read.spark.useHeader", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+df.write
+    .format("org.zuinnote.spark.office.excel")
+  .option("write.locale.bcp47", "de")
+  .option("write.spark.useHeader",true)
+  .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+val df2=sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").option("read.spark.useHeader", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+Then("inferred schema is correct and data is correctly parsed")
+// check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
+assert(9==df2.schema.fields.length)
+// check columns correctly read
+assert("decimalsc1"==df2.columns(0))
+assert("booleancolumn"==df2.columns(1))
+assert("datecolumn"==df2.columns(2))
+assert("stringcolumn"==df2.columns(3))
+assert("decimalp8sc3"==df2.columns(4))
+assert("bytecolumn"==df2.columns(5))
+assert("shortcolumn"==df2.columns(6))
+assert("intcolumn"==df2.columns(7))
+assert("longcolumn"==df2.columns(8))
+// check data types
+assert(true==df2.schema.fields(0).dataType.isInstanceOf[DecimalType])
+assert(2==df2.schema.fields(0).dataType.asInstanceOf[DecimalType].precision)
+assert(1==df2.schema.fields(0).dataType.asInstanceOf[DecimalType].scale)
+assert(true==df2.schema.fields(1).dataType.isInstanceOf[BooleanType])
+assert(true==df2.schema.fields(2).dataType.isInstanceOf[DateType])
+assert(true==df2.schema.fields(3).dataType.isInstanceOf[StringType])
+assert(true==df2.schema.fields(4).dataType.isInstanceOf[DecimalType])
+assert(8==df2.schema.fields(4).dataType.asInstanceOf[DecimalType].precision)
+assert(3==df2.schema.fields(4).dataType.asInstanceOf[DecimalType].scale)
+assert(true==df2.schema.fields(5).dataType.isInstanceOf[ByteType])
+assert(true==df2.schema.fields(6).dataType.isInstanceOf[ShortType])
+assert(true==df2.schema.fields(7).dataType.isInstanceOf[IntegerType])
+assert(true==df2.schema.fields(8).dataType.isInstanceOf[LongType])
+// check data
+val decimalsc1 = df2.select("decimalsc1").collect
+val booleancolumn = df2.select("booleancolumn").collect
+val datecolumn = df2.select("datecolumn").collect
+val stringcolumn = df2.select("stringcolumn").collect
+val decimalp8sc3 = df2.select("decimalp8sc3").collect
+val bytecolumn = df2.select("bytecolumn").collect
+val shortcolumn = df2.select("shortcolumn").collect
+val intcolumn = df2.select("intcolumn").collect
+val longcolumn = df2.select("longcolumn").collect
+// check data
+// check column1
+
+assert(new java.math.BigDecimal("1.0").compareTo(decimalsc1(0).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(new java.math.BigDecimal("1.5").compareTo(decimalsc1(1).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(new java.math.BigDecimal("3.4").compareTo(decimalsc1(2).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(new java.math.BigDecimal("5.5").compareTo(decimalsc1(3).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(null==decimalsc1(4).get(0))
+assert(new java.math.BigDecimal("3.4").compareTo(decimalsc1(5).get(0).asInstanceOf[java.math.BigDecimal])==0)
+// check column2
+assert(true==booleancolumn(0).get(0))
+assert(false==booleancolumn(1).get(0))
+assert(false==booleancolumn(2).get(0))
+assert(false==booleancolumn(3).get(0))
+assert(null==booleancolumn(4).get(0))
+assert(true==booleancolumn(5).get(0))
+// check column3
+val sdf = new SimpleDateFormat("yyyy-MM-dd")
+val expectedDate1 = sdf.parse("2017-01-01")
+val expectedDate2 = sdf.parse("2017-02-28")
+val expectedDate3 = sdf.parse("2000-02-29")
+val expectedDate4 = sdf.parse("2017-03-01")
+val expectedDate5 = null
+val expectedDate6 = sdf.parse("2017-03-01")
+assert(expectedDate1.compareTo(datecolumn(0).get(0).asInstanceOf[java.sql.Date])==0)
+assert(expectedDate2.compareTo(datecolumn(1).get(0).asInstanceOf[java.sql.Date])==0)
+assert(expectedDate3.compareTo(datecolumn(2).get(0).asInstanceOf[java.sql.Date])==0)
+assert(expectedDate4.compareTo(datecolumn(3).get(0).asInstanceOf[java.sql.Date])==0)
+assert(expectedDate5==datecolumn(4).get(0))
+assert(expectedDate6.compareTo(datecolumn(5).get(0).asInstanceOf[java.sql.Date])==0)
+// check column4
+
+assert("This is a text"==stringcolumn(0).get(0))
+assert("Another String"==stringcolumn(1).get(0))
+assert("10"==stringcolumn(2).get(0))
+assert("test3"==stringcolumn(3).get(0))
+assert("test4"==stringcolumn(4).get(0))
+assert("test5"==stringcolumn(5).get(0))
+// check column5
+
+assert(new java.math.BigDecimal("10.000").compareTo(decimalp8sc3(0).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(new java.math.BigDecimal("2.334").compareTo(decimalp8sc3(1).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(new java.math.BigDecimal("4.500").compareTo(decimalp8sc3(2).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(new java.math.BigDecimal("11.000").compareTo(decimalp8sc3(3).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(new java.math.BigDecimal("100.000").compareTo(decimalp8sc3(4).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(new java.math.BigDecimal("10000.500").compareTo(decimalp8sc3(5).get(0).asInstanceOf[java.math.BigDecimal])==0)
+// check column6
+assert(3==bytecolumn(0).get(0))
+assert(5==bytecolumn(1).get(0))
+assert(-100==bytecolumn(2).get(0))
+assert(2==bytecolumn(3).get(0))
+assert(3==bytecolumn(4).get(0))
+assert(120==bytecolumn(5).get(0))
+// check column7
+assert(3==shortcolumn(0).get(0))
+assert(4==shortcolumn(1).get(0))
+assert(5==shortcolumn(2).get(0))
+assert(250==shortcolumn(3).get(0))
+assert(3==shortcolumn(4).get(0))
+assert(100==shortcolumn(5).get(0))
+// check column8
+assert(100==intcolumn(0).get(0))
+assert(65335==intcolumn(1).get(0))
+assert(1==intcolumn(2).get(0))
+assert(250==intcolumn(3).get(0))
+assert(5==intcolumn(4).get(0))
+assert(10000==intcolumn(5).get(0))
+// check column9
+assert(65335==longcolumn(0).get(0))
+assert(1==longcolumn(1).get(0))
+assert(250==longcolumn(2).get(0))
+assert(10==longcolumn(3).get(0))
+assert(3147483647L==longcolumn(4).get(0))
+assert(10==longcolumn(5).get(0))
+}
+
+
 }
