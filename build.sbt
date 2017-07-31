@@ -7,7 +7,7 @@ lazy val root = (project in file("."))
 .settings(
 organization := "com.github.zuinnote",
 name := "spark-hadoopoffice-ds",
-version := "1.0.3"
+version := "1.0.4"
 )
  .configs( IntegrationTest )
   .settings( Defaults.itSettings : _*)
@@ -30,7 +30,7 @@ crossScalaVersions := Seq("2.10.5", "2.11.7")
 scalacOptions += "-target:jvm-1.7"
 
 
-libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.0.3" % "compile"
+libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.0.4" % "compile"
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.1" % "provided"
 
