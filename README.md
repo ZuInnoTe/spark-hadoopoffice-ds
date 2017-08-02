@@ -110,11 +110,15 @@ val df = sqlContext.read
 Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API). 
 
 Another option is to infer the schema of primitive Spark SQL DataTypes automatically:
+
+ ```
 val sqlContext = sparkSession.sqlContext
 val df = sqlContext.read
     .format("org.zuinnote.spark.office.excel")
     .option("read.locale.bcp47", "us").option("spark.read.simpleMode",true)  
 .load(args(0))
+
+ ```
 
 This option can be combined with spark.read.useHeader to interpret the first row in the Excel as column names of the DataFrame.
 
