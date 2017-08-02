@@ -56,6 +56,7 @@ private[excel] class ExcelOutputWriter(
   private var currentRowNum: Int = 0;
   private val defaultSheetName: String = options.getOrElse("write.spark.defaultsheetname","Sheet1")
   private var useHeader: Boolean = options.getOrElse("write.spark.useHeader","false").toBoolean
+  private var dateFormat: String = options.getOrElse("write.spark.dateformat","MM/dd/yyyy")
   private var converter: InternalRow => Row = _
   converter =    CatalystTypeConverters.createToScalaConverter(dataSchema).asInstanceOf[InternalRow => Row]
 
@@ -204,7 +205,7 @@ def write(row: InternalRow): Unit = {
       formattedValue=""
       if (x!=null) {
           // cf. http://poi.apache.org/spreadsheet/quick-guide.html#CreateDateCells
-          val sdf = new SimpleDateFormat("MM/dd/yy")
+          val sdf = new SimpleDateFormat(dateFormat)
           formattedValue = sdf.format(x.asInstanceOf[java.sql.Date])
       }
 			comment=""
