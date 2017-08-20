@@ -50,7 +50,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.10
 
-version: 1.0.3
+version: 1.0.4
 
 ## Scala 2.11
  
@@ -58,7 +58,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.0.3
+version: 1.0.4
 
 # Schema
 ## Excel File
