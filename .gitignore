@@ -6,6 +6,9 @@ bin/
 .settings/
 .classpath
 .project
+.cache-main
+.cache-tests
+.metadata/
 
 # Ignore Gradle GUI config
 gradle-app.setting
