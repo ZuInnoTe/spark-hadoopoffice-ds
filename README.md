@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds.svg?branch=master)](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ebd5a75819fb4636ad176f30078fd776)](https://www.codacy.com/app/jornfranke/spark-hadoopoffice-ds?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ZuInnoTe/spark-hadoopoffice-ds&amp;utm_campaign=Badge_Grade)
 
-A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). This Spark datasource assumes at least Spark 2.0.1. Currently this datasource supports the following formats of the HadoopOffice library:
+A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). This Spark datasource assumes at least Spark 2.0.1. However, the HadoopOffice library can also be used directly from Spark 1.x. Currently this datasource supports the following formats of the HadoopOffice library:
 
 * Excel
   * Datasource format: org.zuinnote.spark.office.Excel
@@ -14,20 +14,11 @@ Find here the status from the Continuous Integration service: https://travis-ci.
 
 
 # Release Notes
-## Version 1.0.4
-Version based on hadoopoffice library 1.0.4, added support for Spark 2.2, [reading/writing header](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/issues/4), [infering schema](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/issues/5) from Excel to read a dataframe with primitive Spark SQL datatypes and fix of [critical bug](https://github.com/ZuInnoTe/hadoopoffice/issues/15) for writing dataframes with primitive Spark SQL datatypes
 
-## Version 1.0.3
-Version based on hadoopoffice library 1.0.3 and added support for Spark 2.1 (cf. [Issue 2](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/issues/2))
-
-## Version 1.0.2
-Version based on hadoopoffice library 1.0.2 and added integration tests to ensure quality.
-
-## Version 1.0.1
-Version based on hadoopoffice library 1.0.1 and the new mapreduce API via the [FileFormat API](https://github.com/apache/spark/blob/master/sql/core/src/main/scala/org/apache/spark/sql/execution/datasources/FileFormat.scala) of Spark2 datasources.
+Find the latest release information [here](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/releases)
 
 # Options
-All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format), such as metadarta, encryption/decryption or low footprint mode, are supported. However, in the datasource you specify them without the prefix hadoopoffice. For example, instead of "hadoopoffice.read.locale.bcp47" you need to specify the option as "read.locale.bcp47".
+All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format), such as metadata, encryption/decryption or low footprint mode, are supported. However, in the datasource you specify them without the prefix hadoopoffice. For example, instead of "hadoopoffice.read.locale.bcp47" you need to specify the option as "read.locale.bcp47".
 
 There are the following options related to Spark in case you need to write rows containing primitive types. In this case a default sheetname need to be set:
 * "write.spark.defaultsheetname", any valid sheetname, e.g. Sheet1
@@ -50,7 +41,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.10
 
-version: 1.0.3
+version: 1.0.4
 
 ## Scala 2.11
  
@@ -58,7 +49,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.0.3
+version: 1.0.4
 
 # Schema
 ## Excel File
@@ -176,7 +167,7 @@ df.show();
 ```
 library(SparkR)
 
-Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.0.2" "sparkr-shell"')
+Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.0.4" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
 df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "us")
