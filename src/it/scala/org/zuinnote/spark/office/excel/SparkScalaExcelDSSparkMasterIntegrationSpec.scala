@@ -493,6 +493,7 @@ val classLoader = getClass().getClassLoader()
 When("loaded by Excel data source and written back")
 val sqlContext = new SQLContext(sc)
 val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").option("read.spark.useHeader", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+df.printSchema
 df.write
     .format("org.zuinnote.spark.office.excel")
   .option("write.locale.bcp47", "de")
