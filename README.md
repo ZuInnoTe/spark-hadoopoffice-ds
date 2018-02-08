@@ -25,7 +25,8 @@ There are the following options related to Spark in case you need to write rows 
 
 Additionally the following options exist:
 * "read.spark.useHeader" interpret the first row of the Excel as column names of the data frame, True if headers should be read, False if not. Default: False
-* "read.spark.simpleMode" infers the schema of the DataFrame from the data in the Excel. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). True if schema should be inferred, False if not. Default: False
+* "read.spark.simpleMode" infers the schema of the DataFrame from the data in the Excel. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). If the schema is inferred it is done only based on one file in the directory. True if schema should be inferred, False if not. Default: False
+* "read.spark.simpleMode.maxInferRows". This defines the maximum rows to read for inferring the schema. This is useful if you know already that the schema can be determined from a given number of rows. Default: all rows 
 * "write.spark.useHeader" use the column names of the dataframe as headers in Excel (=first row in Excel), True if headers should be written, False if not. Default: False
 
 Additionally, the following options of the standard Hadoop API are supported:
