@@ -39,6 +39,11 @@ import org.zuinnote.hadoop.office.format.mapreduce._
 
 import org.apache.commons.logging.LogFactory
 import org.apache.commons.logging.Log
+import org.zuinnote.hadoop.office.format.common.HadoopOfficeWriteConfiguration
+import java.util.Locale
+import java.text.DecimalFormat
+import org.zuinnote.hadoop.office.format.common.converter.ExcelConverterSimpleSpreadSheetCellDAO
+import java.text.NumberFormat
 
 // NOTE: This class is instantiated and used on executor side only, no need to be serializable.
 private[excel] class ExcelOutputWriter(
@@ -55,9 +60,16 @@ private[excel] class ExcelOutputWriter(
   private val defaultSheetName: String = options.getOrElse("write.spark.defaultsheetname", "Sheet1")
   private var useHeader: Boolean = options.getOrElse("write.spark.useHeader", "false").toBoolean
   private var dateFormat: String = options.getOrElse("write.spark.dateformat", "MM/dd/yyyy")
+  private val localeBCP47: String = options.getOrElse(HadoopOfficeWriteConfiguration.CONF_LOCALE.substring("hadoopoffice.".length()), "")
+  private var locale: Locale = Locale.getDefault() // only for determining the datatype    
+      if (!"".equals(localeBCP47)) {
+        locale = new Locale.Builder().setLanguageTag(localeBCP47).build()
+  }
   private var converter: InternalRow => Row = _
   converter = CatalystTypeConverters.createToScalaConverter(dataSchema).asInstanceOf[InternalRow => Row]
-
+  private val sdf = new SimpleDateFormat(dateFormat);
+  private val decimalFormat = NumberFormat.getInstance(locale).asInstanceOf[DecimalFormat]
+  private val simpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(sdf,decimalFormat)
 /***
 *
 * Writes a row to Excel (Spark 2.2)
@@ -95,152 +107,30 @@ private[excel] class ExcelOutputWriter(
       }
       currentRowNum += 1
       useHeader = false
-    }
+    } 
     // for each value in the row
-    var currentColumnNum = 0;
-    if (row.size == 0) { // write empty cell / row
-      val emptySCD = new SpreadSheetCellDAO("", "", "", MSExcelUtil.getCellAddressA1Format(currentRowNum, 0), defaultSheetName);
-      recordWriter.write(NullWritable.get(), emptySCD)
-    }
-    for (i <- 0 to row.size - 1) { // for each element of the row
-      var x = row.get(i)
-      var formattedValue = ""
-      var comment = ""
-      var formula = ""
-      var address = ""
-      var sheetName = ""
-      x match {
-        case _: Boolean => {
-          formattedValue = ""
-          comment = ""
-          formula = ""
-          if (x != null) {
-            formula = x.toString
-          }
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: Byte => {
-          formattedValue = ""
-          comment = ""
-          formula = ""
-          if (x != null) {
-            formula = x.toString
-          }
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: Short => {
-          formattedValue = ""
-          comment = ""
-          formula = ""
-          if (x != null) {
-            formula = x.toString
-          }
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: Integer => {
-          formattedValue = ""
-          comment = ""
-          formula = ""
-          if (x != null) {
-            formula = x.toString
-          }
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: Long => {
-          formattedValue = ""
-          comment = ""
-          formula = ""
-          if (x != null) {
-            formula = x.toString
-          }
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: Float => {
-          formattedValue = ""
-          comment = ""
-          formula = ""
-          if (x != null) {
-            formula = x.toString
-          }
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: Double => {
-          formattedValue = ""
-          comment = ""
-          formula = ""
-          if (x != null) {
-            formula = x.toString
-          }
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: String => {
-          formattedValue = x.toString
-          comment = ""
-          formula = ""
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: BigDecimal => {
-          formattedValue = ""
-          comment = ""
-          formula = ""
-          if (x != null) {
-            formula = x.toString
-          }
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: Date => {
-          formattedValue = ""
-          if (x != null) {
-            // cf. http://poi.apache.org/spreadsheet/quick-guide.html#CreateDateCells
-            val sdf = new SimpleDateFormat(dateFormat)
-            formattedValue = sdf.format(x.asInstanceOf[java.sql.Date])
-          }
-          comment = ""
-          formula = ""
-
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: Timestamp => {
-          formattedValue = ""
-
-          comment = ""
-          formula = ""
-          if (x != null) {
-            formula = x.toString
-          }
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
-        }
-        case _: Seq[String] if (x.asInstanceOf[Seq[String]].size == 5) => {
-          // check if it correspond to a five String sequence (assumed to represent a SpreadSheetCellDAO).
-          formattedValue = x.asInstanceOf[Seq[String]](0)
-          comment = x.asInstanceOf[Seq[String]](1)
-          formula = x.asInstanceOf[Seq[String]](2)
-          address = x.asInstanceOf[Seq[String]](3)
-          sheetName = x.asInstanceOf[Seq[String]](4)
-        }
-        case _ => {
-          formattedValue = ""
-          comment = ""
-          formula = ""
-          address = MSExcelUtil.getCellAddressA1Format(currentRowNum, currentColumnNum)
-          sheetName = defaultSheetName
+    if (row.size>0) {
+      var currentColumnNum = 0;
+      val simpleObject = new Array[AnyRef](row.size)
+      for (i <- 0 to row.size - 1) { // for each element of the row
+        val obj = row.get(i)
+        if ((obj.isInstanceOf[Seq[String]]) && (obj.asInstanceOf[Seq[String]].length==5)) {
+          val formattedValue = obj.asInstanceOf[Seq[String]](0)
+          val comment = obj.asInstanceOf[Seq[String]](1)
+          val formula = obj.asInstanceOf[Seq[String]](2)
+          val address = obj.asInstanceOf[Seq[String]](3)
+          val sheetName = obj.asInstanceOf[Seq[String]](4)
+          simpleObject(i) = new SpreadSheetCellDAO(formattedValue,comment,formula,address,sheetName)
+        } else {
+          simpleObject(i)=obj.asInstanceOf[AnyRef]
         }
       }
-      // create SpreadSheetCellDAO
-      val currentSCD = new SpreadSheetCellDAO(formattedValue, comment, formula, address, sheetName)
-      recordWriter.write(NullWritable.get(), currentSCD)
-      currentColumnNum += 1
+      // convert row to spreadsheetcellDAO
+      val spreadSheetCellDAORow = simpleConverter.getSpreadSheetCellDAOfromSimpleDataType(simpleObject, defaultSheetName, currentRowNum)
+      // write it
+      for (x<- spreadSheetCellDAORow) {
+        recordWriter.write(NullWritable.get(), x)
+      }
     }
     currentRowNum += 1
   }
