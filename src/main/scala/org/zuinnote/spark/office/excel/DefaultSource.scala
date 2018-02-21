@@ -255,7 +255,11 @@ private[excel] class DefaultSource
     filters:         Seq[Filter],
     options:         Map[String, String],
     hadoopConf:      Configuration): PartitionedFile => Iterator[InternalRow] = {
-    val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hadoopConf))
+    var hConf=new Configuration();
+      if (hadoopConf!=null) {
+      hConf = hadoopConf
+    } 
+    val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hConf))
     options.foreach {
       case (key, value) => broadcastedHadoopConf.value.value.set("hadoopoffice." + key, value)
     }
