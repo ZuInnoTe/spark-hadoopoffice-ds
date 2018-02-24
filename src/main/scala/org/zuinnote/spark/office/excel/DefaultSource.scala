@@ -88,6 +88,10 @@ import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericInteg
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericLongDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericStringDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericDataType
+import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.FloatType
+import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericDoubleDataType
+import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericFloatDataType
 
 /**
  * Author: Jörn Franke <zuinnote@gmail.com>
@@ -296,6 +300,8 @@ private[excel] class DefaultSource
         case ns: ShortType => convSchema(i) = new GenericShortDataType()
         case ni: IntegerType => convSchema(i) = new GenericIntegerDataType()
         case nl: LongType => convSchema(i) = new GenericLongDataType()
+        case nd: DoubleType => convSchema(i) = new GenericDoubleDataType()
+        case nf: FloatType => convSchema(i) = new GenericFloatDataType()
         case s: StringType => convSchema(i) = new GenericStringDataType()
         case _ => {
           LOG.warn("Unknown DataType in schema. Assuming String for column "+i)
