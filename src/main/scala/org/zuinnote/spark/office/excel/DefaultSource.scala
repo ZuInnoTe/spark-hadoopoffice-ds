@@ -214,6 +214,7 @@ private[excel] class DefaultSource
         }
      
       }
+      reader.close();
       Some(StructType(defaultRow.toSeq))
     }
 
