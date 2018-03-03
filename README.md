@@ -24,7 +24,7 @@ All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopof
 Additionally the following options exist:
 * "read.spark.useHeader" interpret the first row of the Excel as column names of the data frame, True if headers should be read, False if not. Default: False
 * "read.spark.simpleMode" infers the schema of the DataFrame from the data in the Excel. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). If the schema is inferred it is done only based on one file in the directory. Additionally, the conversion of Decimals is based on the locale that you define (see hadoopoffice options from above). True if schema should be inferred, False if not. Default: False
-* "read.spark.simpleMode.maxInferRows" (as of 1.1.0). This defines the maximum rows to read for inferring the schema. This is useful if you know already that the schema can be determined from a given number of rows. Default: all rows
+* "read.spark.simpleMode.maxInferRows" (as of 1.1.0). This defines the maximum rows to read for inferring the schema. This is useful if you know already that the schema can be determined from a given number of rows. Default: all rows ("-1")
 * "read.spark.simpleMode.dateLocale" (as of 1.1.0). This is an experimental options and defines the date locale (in [BCP47](https://tools.ietf.org/html/bcp47) format) for parsing dates in simple mode. Due to a POI speciality in most of the cases (even if you use Excel in a different language) it needs to be set to US. Defaults to "US". 
 
 
