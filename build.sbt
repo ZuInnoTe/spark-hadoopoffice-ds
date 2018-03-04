@@ -32,6 +32,11 @@ scalacOptions += "-target:jvm-1.7"
 
 libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.1.0" % "compile"
 
+// following three libraries are only needed for digital signatures
+libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.58" % "compile"
+libraryDependencies += "org.bouncycastle" % "bcpkix-jdk15on" % "1.58" % "compile"
+libraryDependencies += "org.apache.santuario" % "xmlsec" % "2.1.0" % "compile"
+
 libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.1" % "provided"
 
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.1" % "provided"
