@@ -81,6 +81,7 @@ import org.apache.commons.logging.LogFactory
 import org.apache.commons.logging.Log
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericBooleanDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericDateDataType
+import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericTimestampDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericBigDecimalDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericByteDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericShortDataType
@@ -92,6 +93,7 @@ import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.FloatType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericDoubleDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericFloatDataType
+import org.apache.spark.sql.types.TimestampType
 
 /**
  * Author: Jörn Franke <zuinnote@gmail.com>
@@ -137,7 +139,7 @@ private[excel] class DefaultSource
     var maxInferRows: Integer = options.getOrElse(CONF_SIMPLEMODE_MAXROWS,  DEFAULT_SIMPLEMODE_MAXROWS).toInt
     // use the first row of the Excel as header descriptors (only valid in simpleMode)
     val useHeader: Boolean = options.getOrElse(CONF_USEHEADER, DEFAULT_USEHEADER).toBoolean
-
+  
     val localeBCP47: String = options.getOrElse(HadoopOfficeReadConfiguration.CONF_LOCALE.substring("hadoopoffice.".length()), "")
     val datelocaleBCP47: String = options.getOrElse(CONF_SIMPLEMODE_DATELOCALE, DEFAULT_SIMPLEMODE_DATELOCALE)
     if (!simpleMode) {
@@ -161,6 +163,10 @@ private[excel] class DefaultSource
       val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(new Configuration()))
       options.foreach {
         case (key, value) => broadcastedHadoopConf.value.value.set("hadoopoffice." + key, value)
+        case (key, value) => broadcastedHadoopConf.value.value.set(key, value)
+      }
+      if (useHeader) {
+        broadcastedHadoopConf.value.value.set(HadoopOfficeReadConfiguration.CONF_READHEADER,"true")
       }
       // in simple mode scan through the Excel and determine the type / column
       var headers: Seq[String] = Seq()
@@ -176,8 +182,9 @@ private[excel] class DefaultSource
       val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(dateFormat,decimalFormat );
       for (excelrow <- reader) {
         if ((useHeader) && (i == 0)) { // first row is the header. It is expected that it has the all columns that have data are filled
-          for (x <- excelrow.get) {  
-            headers = headers :+ x.asInstanceOf[SpreadSheetCellDAO].getFormattedValue
+          val ph = reader.getReader.asInstanceOf[ExcelRecordReader].getOfficeReader.getCurrentParser.getHeader()
+          for (x <- ph) {  
+            headers = headers :+ x
           }
           i+=1
         } else {
@@ -304,6 +311,7 @@ private[excel] class DefaultSource
         case nd: DoubleType => convSchema(i) = new GenericDoubleDataType()
         case nf: FloatType => convSchema(i) = new GenericFloatDataType()
         case s: StringType => convSchema(i) = new GenericStringDataType()
+        case t: TimestampType => convSchema(i) = new GenericTimestampDataType()
         case _ => {
           LOG.warn("Unknown DataType in schema. Assuming String for column "+i)
           convSchema(i)=new GenericStringDataType()
@@ -315,14 +323,12 @@ private[excel] class DefaultSource
     excelSimpleConverter.setSchemaRow(convSchema)
     val broadcastConverter = sparkSession.sparkContext.broadcast(excelSimpleConverter)
     (file: PartitionedFile) => {
+      if (useHeader) {
+        broadcastedHadoopConf.value.value.set(HadoopOfficeReadConfiguration.CONF_READHEADER,"true")
+      }
       val reader = new HadoopFileExcelReader(file, broadcastedHadoopConf.value.value)
       Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => reader.close()))
-      if (useHeader) {
-        // skip header
-        if (reader.hasNext) {
-          reader.next
-        }
-      }
+      
       reader.map { excelrow => // it is an arraywritable of SpreadSheetCellDAO
         {
           if (!simpleMode) { // SpreadSheetCellDAO mode

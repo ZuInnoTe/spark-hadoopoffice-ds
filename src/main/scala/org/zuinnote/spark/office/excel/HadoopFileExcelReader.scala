@@ -55,6 +55,8 @@ class HadoopFileExcelReader(
     reader.initialize(fileSplit, hadoopAttemptContext)
     new RecordReaderIterator(reader)
   }
+  
+  def getReader: RecordReader[Text, ArrayWritable] = reader
 
   override def hasNext: Boolean = iterator.hasNext
 
