@@ -11,7 +11,7 @@ version := "1.1.0"
 )
  .configs( IntegrationTest )
   .settings( Defaults.itSettings : _*)
-
+.enablePlugins(JacocoItPlugin)
 
 
 resolvers += Resolver.mavenLocal
@@ -19,10 +19,6 @@ resolvers += Resolver.mavenLocal
 publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.m2/repository")))
 
 fork  := true
-
-jacoco.settings
-
-itJacoco.settings
 
 
 crossScalaVersions := Seq("2.10.5", "2.11.7")
