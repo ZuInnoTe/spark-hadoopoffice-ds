@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds.svg?branch=master)](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ebd5a75819fb4636ad176f30078fd776)](https://www.codacy.com/app/jornfranke/spark-hadoopoffice-ds?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ZuInnoTe/spark-hadoopoffice-ds&amp;utm_campaign=Badge_Grade)
 
-A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). This Spark datasource assumes at least Spark 2.0.1. However, the HadoopOffice library can also be used directly from Spark 1.x. Currently this datasource supports the following formats of the HadoopOffice library:
+A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). This Spark datasource assumes at least Spark 2.0.1. However, the HadoopOffice library can also be used directly from Spark 1.x (see [how to](https://github.com/ZuInnoTe/hadoopoffice/wiki) section). Currently this datasource supports the following formats of the HadoopOffice library:
 
 * Excel
   * Datasource format: org.zuinnote.spark.office.Excel
@@ -22,7 +22,7 @@ All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopof
 
 
 Additionally the following options exist:
-* "read.spark.useHeader" interpret the first row of the Excel as column names of the data frame, True if headers should be read, False if not. Default: False
+* "read.spark.useHeader" interpret the first row of the Excel as column names of the data frame, True if headers should be read, False if not. Default: False. Check also out [further options](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format#header) to deal with headers and skipping lines in other sheets by configuring the HadoopOffice library.
 * "read.spark.simpleMode" infers the schema of the DataFrame from the data in the Excel. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). If the schema is inferred it is done only based on one file in the directory. Additionally, the conversion of Decimals is based on the locale that you define (see hadoopoffice options from above). True if schema should be inferred, False if not. Default: False
 * "read.spark.simpleMode.maxInferRows" (as of 1.1.0). This defines the maximum rows to read for inferring the schema. This is useful if you know already that the schema can be determined from a given number of rows. Default: all rows ("-1")
 * "read.spark.simpleMode.dateLocale" (as of 1.1.0). This is an experimental options and defines the date locale (in [BCP47](https://tools.ietf.org/html/bcp47) format) for parsing dates in simple mode. Due to a POI speciality in most of the cases (even if you use Excel in a different language) it needs to be set to US. Defaults to "US". 
@@ -46,7 +46,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.10
 
-version: 1.0.4
+version: 1.1.0
 
 ## Scala 2.11
  
@@ -54,7 +54,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.0.4
+version: 1.1.0
 
 # Schema
 ## Excel File
@@ -172,7 +172,7 @@ df.show();
 ```
 library(SparkR)
 
-Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.0.4" "sparkr-shell"')
+Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.1.0" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
 df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "us")
