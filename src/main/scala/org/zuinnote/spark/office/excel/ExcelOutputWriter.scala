@@ -59,7 +59,7 @@ private[excel] class ExcelOutputWriter(
   private var currentRowNum: Int = 0;
   private val defaultSheetName: String = options.getOrElse("write.spark.defaultsheetname", "Sheet1")
   private var useHeader: Boolean = options.getOrElse("write.spark.useHeader", "false").toBoolean
-  private var dateFormat: String = options.getOrElse("write.spark.dateformat", "MM/dd/yyyy")
+  private var dateFormat: String = options.getOrElse("write.spark.dateformat", "US")
   private val localeBCP47: String = options.getOrElse(HadoopOfficeWriteConfiguration.CONF_LOCALE.substring("hadoopoffice.".length()), "")
   private var locale: Locale = Locale.getDefault() // only for determining the datatype    
       if (!"".equals(localeBCP47)) {
@@ -67,7 +67,11 @@ private[excel] class ExcelOutputWriter(
   }
   private var converter: InternalRow => Row = _
   converter = CatalystTypeConverters.createToScalaConverter(dataSchema).asInstanceOf[InternalRow => Row]
-  private val sdf = new SimpleDateFormat(dateFormat);
+   var datelocale: Locale = Locale.getDefault()
+      if (!"".equals(dateFormat)) {
+        datelocale = new Locale.Builder().setLanguageTag(dateFormat).build()
+      }
+  private var sdf = DateFormat.getDateInstance(DateFormat.SHORT, datelocale).asInstanceOf[SimpleDateFormat]
   private val decimalFormat = NumberFormat.getInstance(locale).asInstanceOf[DecimalFormat]
   private val simpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(sdf,decimalFormat)
 /***
