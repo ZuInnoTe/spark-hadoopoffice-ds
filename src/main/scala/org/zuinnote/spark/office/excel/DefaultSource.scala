@@ -242,7 +242,10 @@ private[excel] class DefaultSource
     options.foreach {
       case ("mapreduce.output.fileoutputformat.compress", value) => sparkSession.conf.set("mapreduce.output.fileoutputformat.compress", value.toBoolean)
       case ("mapreduce.output.fileoutputformat.compress.codec", value) => sparkSession.conf.set("mapreduce.output.fileoutputformat.compress.codec", value)
-      case (key, value) => sparkSession.conf.set("hadoopoffice." + key, value)
+      case (key, value) => {
+        sparkSession.conf.set("hadoopoffice." + key, value)
+        sparkSession.conf.set( key, value)
+      }
     }
     new ExcelOutputWriterFactory(options)
   }
