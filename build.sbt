@@ -7,7 +7,7 @@ lazy val root = (project in file("."))
 .settings(
 organization := "com.github.zuinnote",
 name := "spark-hadoopoffice-ds",
-version := "1.1.0"
+version := "1.1.1"
 )
  .configs( IntegrationTest )
   .settings( Defaults.itSettings : _*)
@@ -26,7 +26,7 @@ crossScalaVersions := Seq("2.10.5", "2.11.7")
 scalacOptions += "-target:jvm-1.7"
 
 
-libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.1.0" % "compile"
+libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.1.1" % "compile"
 
 // following three libraries are only needed for digital signatures
 libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.58" % "compile"
