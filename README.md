@@ -30,7 +30,7 @@ Additionally the following options exist:
 
 There are the following options related to Spark in case you need to write rows containing primitive types. In this case a default sheetname need to be set:
 * "write.spark.defaultsheetname", any valid sheetname, e.g. Sheet1
-* "write.spark.dateformat", date formatting used for writing, due to a particularity of Apache POI and Excel most of the time US dateformat is the correct one (Excel converts it automatically to the right dateformat in the language of the user). Default: MM/dd/yyyy
+* "write.spark.datelocale" (changed in 1.1.1), date formatting used for writing, due to a particularity of Apache POI and Excel most of the time US dateformat is the correct one (Excel converts it automatically to the right dateformat in the language of the user). Default: MM/dd/yyyy
 * "write.spark.useHeader" use the column names of the dataframe as headers in Excel (=first row in Excel), True if headers should be written, False if not. Default: False
 
 Additionally, the following options of the standard Hadoop API are supported:
@@ -46,7 +46,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.10
 
-version: 1.1.0
+version: 1.1.1
 
 ## Scala 2.11
  
@@ -54,7 +54,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.1.0
+version: 1.1.1
 
 # Schema
 ## Excel File
