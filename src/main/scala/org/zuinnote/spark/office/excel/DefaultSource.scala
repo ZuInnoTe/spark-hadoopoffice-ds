@@ -116,7 +116,7 @@ private[excel] class DefaultSource
   val DEFAULT_USEHEADER="false";
   val DEFAULT_SIMPLEMODE_MAXROWS = "-1";
   val DEFAULT_SIMPLEMODE_DATELOCALE="US";
-  
+
   val LOG = LogFactory.getLog(classOf[DefaultSource])
   val schema: StructType = StructType(Seq(StructField("rows", ArrayType(StructType(Seq(
     StructField("formattedValue", StringType, true),
@@ -139,7 +139,7 @@ private[excel] class DefaultSource
     var maxInferRows: Integer = options.getOrElse(CONF_SIMPLEMODE_MAXROWS,  DEFAULT_SIMPLEMODE_MAXROWS).toInt
     // use the first row of the Excel as header descriptors (only valid in simpleMode)
     val useHeader: Boolean = options.getOrElse(CONF_USEHEADER, DEFAULT_USEHEADER).toBoolean
-  
+
     val localeBCP47: String = options.getOrElse(HadoopOfficeReadConfiguration.CONF_LOCALE.substring("hadoopoffice.".length()), "")
     val datelocaleBCP47: String = options.getOrElse(CONF_SIMPLEMODE_DATELOCALE, DEFAULT_SIMPLEMODE_DATELOCALE)
     if (!simpleMode) {
@@ -149,7 +149,7 @@ private[excel] class DefaultSource
     } else {
       // determine locale to interpret strings
       var locale: Locale = Locale.getDefault() // only for determining the datatype
-     
+
       if (!"".equals(localeBCP47)) {
         locale = new Locale.Builder().setLanguageTag(localeBCP47).build()
       }
@@ -160,11 +160,15 @@ private[excel] class DefaultSource
       val decimalFormat =  NumberFormat.getInstance(locale).asInstanceOf[DecimalFormat];
       val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, datelocale).asInstanceOf[SimpleDateFormat]
       // use the correct conf
-      val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(new Configuration()))
+      val hConf = new Configuration()
       options.foreach {
-        case (key, value) => broadcastedHadoopConf.value.value.set("hadoopoffice." + key, value)
-        case (key, value) => broadcastedHadoopConf.value.value.set(key, value)
+        case (key, value) => {
+          hConf.set("hadoopoffice." + key, value);
+          hConf.set(key, value);
+        }
       }
+      val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hConf))
+
       if (useHeader) {
         broadcastedHadoopConf.value.value.set(HadoopOfficeReadConfiguration.CONF_READHEADER,"true")
       }
@@ -183,7 +187,7 @@ private[excel] class DefaultSource
       for (excelrow <- reader) {
         if ((useHeader) && (i == 0)) { // first row is the header. It is expected that it has the all columns that have data are filled
           val ph = reader.getReader.asInstanceOf[ExcelRecordReader].getOfficeReader.getCurrentParser.getHeader()
-          for (x <- ph) {  
+          for (x <- ph) {
             headers = headers :+ x
           }
           i+=1
@@ -219,7 +223,7 @@ private[excel] class DefaultSource
             defaultRow(j) = StructField(columnDescription,StringType, true)
           }
         }
-     
+
       }
       reader.close();
       Some(StructType(defaultRow.toSeq))
@@ -270,11 +274,15 @@ private[excel] class DefaultSource
     var hConf=new Configuration();
       if (hadoopConf!=null) {
       hConf = hadoopConf
-    } 
-    val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hConf))
-    options.foreach {
-      case (key, value) => broadcastedHadoopConf.value.value.set("hadoopoffice." + key, value)
     }
+    options.foreach {
+      case (key, value) => {
+        hConf.set("hadoopoffice." + key, value);
+        hConf.set(key, value);
+      }
+    }
+    val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hConf))
+
 
 
     // convert the Excel to a dataframe consisting of simple data types
@@ -293,10 +301,10 @@ private[excel] class DefaultSource
         datelocale = new Locale.Builder().setLanguageTag(datelocaleBCP47).build()
       }
     val decimalFormat =  NumberFormat.getInstance(locale).asInstanceOf[DecimalFormat]
-    val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, datelocale).asInstanceOf[SimpleDateFormat] 
+    val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, datelocale).asInstanceOf[SimpleDateFormat]
     val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(dateFormat,decimalFormat )
     // configure simpleConverter with schema
-    
+
     val convSchema : Array[GenericDataType]  = new Array[GenericDataType](dataSchema.fields.length)
     var i=0;
     for (sf <- dataSchema.fields) {
@@ -319,7 +327,7 @@ private[excel] class DefaultSource
       }
          i+=1
     }
-    
+
     excelSimpleConverter.setSchemaRow(convSchema)
     val broadcastConverter = sparkSession.sparkContext.broadcast(excelSimpleConverter)
     (file: PartitionedFile) => {
@@ -328,7 +336,7 @@ private[excel] class DefaultSource
       }
       val reader = new HadoopFileExcelReader(file, broadcastedHadoopConf.value.value)
       Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => reader.close()))
-      
+
       reader.map { excelrow => // it is an arraywritable of SpreadSheetCellDAO
         {
           if (!simpleMode) { // SpreadSheetCellDAO mode
@@ -364,10 +372,10 @@ private[excel] class DefaultSource
             InternalRow.fromSeq(primaryRowArray)
           } else {
               // we leverage the converter
-            
+
             val excelRowArray = excelrow.get
             val convertedRow=broadcastConverter.value.getDataAccordingToSchema(excelRowArray.asInstanceOf[Array[SpreadSheetCellDAO]])
-            
+
             var rowData: Seq[Any] = Seq()
             // parse only the columns in required schema
             for (col <- requiredSchema.fields) {
@@ -380,10 +388,10 @@ private[excel] class DefaultSource
                 }
                 i += 1
               }
-             
+
               if (j< convertedRow.length) {
                  val x = convertedRow(j)
-                  
+
                  if (x != null)  {
                     val currentDataType = dataSchema.fields(j).dataType
                     if (currentDataType.isInstanceOf[DateType]) {
@@ -394,7 +402,7 @@ private[excel] class DefaultSource
                       rowData = rowData :+ sparkDecimal
                     } else if (currentDataType.isInstanceOf[StringType]) {
                         rowData = rowData :+ UTF8String.fromString(x.asInstanceOf[String])
-                    }    
+                    }
                     else { // all other data types are "native"
                       rowData = rowData :+ x
                     }
@@ -402,13 +410,13 @@ private[excel] class DefaultSource
                     rowData = rowData :+ null
                  }
               }
-              
-            
+
+
             }
-          
+
             InternalRow.fromSeq(rowData)
           }
-          
+
 
         }
       }
