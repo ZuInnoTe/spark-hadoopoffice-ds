@@ -40,7 +40,10 @@ import org.apache.spark.sql.types.ByteType
 import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.FloatType
+import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.DecimalType
+import org.apache.spark.sql.types.TimestampType
 import org.apache.spark.sql.types.Decimal
 import org.apache.spark.sql.types.NumericType
 import org.apache.spark.sql.types.StringType
@@ -88,6 +91,8 @@ import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericShort
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericIntegerDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericLongDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericStringDataType
+import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericDoubleDataType
+import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericFloatDataType
 import org.zuinnote.hadoop.office.format.common.converter.datatypes.GenericDataType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.FloatType
@@ -110,12 +115,9 @@ private[excel] class DefaultSource
   extends FileFormat with DataSourceRegister {
   val CONF_SIMPLEMODE="read.spark.simpleMode";
   val CONF_SIMPLEMODE_MAXROWS="read.spark.simpleMode.maxInferRows";
-  val CONF_SIMPLEMODE_DATELOCALE="read.spark.simpleMode.dateLocale";
-  val CONF_USEHEADER="read.spark.useHeader";
   val DEFAULT_SIMPLEMODE="false";
-  val DEFAULT_USEHEADER="false";
   val DEFAULT_SIMPLEMODE_MAXROWS = "-1";
-  val DEFAULT_SIMPLEMODE_DATELOCALE="US";
+
 
   val LOG = LogFactory.getLog(classOf[DefaultSource])
   val schema: StructType = StructType(Seq(StructField("rows", ArrayType(StructType(Seq(
@@ -137,28 +139,12 @@ private[excel] class DefaultSource
     // convert the Excel to a dataframe consisting of simple data types
     val simpleMode: Boolean = options.getOrElse(CONF_SIMPLEMODE,  DEFAULT_SIMPLEMODE).toBoolean
     var maxInferRows: Integer = options.getOrElse(CONF_SIMPLEMODE_MAXROWS,  DEFAULT_SIMPLEMODE_MAXROWS).toInt
-    // use the first row of the Excel as header descriptors (only valid in simpleMode)
-    val useHeader: Boolean = options.getOrElse(CONF_USEHEADER, DEFAULT_USEHEADER).toBoolean
-
-    val localeBCP47: String = options.getOrElse(HadoopOfficeReadConfiguration.CONF_LOCALE.substring("hadoopoffice.".length()), "")
-    val datelocaleBCP47: String = options.getOrElse(CONF_SIMPLEMODE_DATELOCALE, DEFAULT_SIMPLEMODE_DATELOCALE)
     if (!simpleMode) {
 
       // normal mode
       Some(schema)
     } else {
-      // determine locale to interpret strings
-      var locale: Locale = Locale.getDefault() // only for determining the datatype
 
-      if (!"".equals(localeBCP47)) {
-        locale = new Locale.Builder().setLanguageTag(localeBCP47).build()
-      }
-       var datelocale: Locale = Locale.getDefault()
-      if (!"".equals(datelocaleBCP47)) {
-        datelocale = new Locale.Builder().setLanguageTag(datelocaleBCP47).build()
-      }
-      val decimalFormat =  NumberFormat.getInstance(locale).asInstanceOf[DecimalFormat];
-      val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, datelocale).asInstanceOf[SimpleDateFormat]
       // use the correct conf
       val hConf = new Configuration()
       options.foreach {
@@ -167,11 +153,10 @@ private[excel] class DefaultSource
           hConf.set(key, value);
         }
       }
+      val hocr = new HadoopOfficeReadConfiguration(hConf)
       val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hConf))
+      val useHeader = hocr.getReadHeader
 
-      if (useHeader) {
-        broadcastedHadoopConf.value.value.set(HadoopOfficeReadConfiguration.CONF_READHEADER,"true")
-      }
       // in simple mode scan through the Excel and determine the type / column
       var headers: Seq[String] = Seq()
       var defaultRow: ListBuffer[StructField] = new ListBuffer[StructField]()
@@ -183,7 +168,7 @@ private[excel] class DefaultSource
       Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => reader.close()))
 
       var i = 0
-      val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(dateFormat,decimalFormat );
+      val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(hocr.getSimpleDateFormat,hocr.getSimpleDecimalFormat,hocr.getSimpleDateTimeFormat );
       for (excelrow <- reader) {
         if ((useHeader) && (i == 0)) { // first row is the header. It is expected that it has the all columns that have data are filled
           val ph = reader.getReader.asInstanceOf[ExcelRecordReader].getOfficeReader.getCurrentParser.getHeader()
@@ -218,6 +203,9 @@ private[excel] class DefaultSource
           case ni: GenericIntegerDataType => defaultRow +=  StructField(columnDescription,IntegerType, true)
           case nl: GenericLongDataType => defaultRow += StructField(columnDescription,LongType, true)
           case s: GenericStringDataType => defaultRow +=  StructField(columnDescription,StringType, true)
+          case nf: GenericFloatDataType => defaultRow += StructField(columnDescription,FloatType, true)
+          case nd: GenericDoubleDataType => defaultRow += StructField(columnDescription,DoubleType, true)
+          case t: GenericTimestampDataType => defaultRow += StructField(columnDescription,TimestampType, true)
           case _ => {
             LOG.warn("Unknown data type assuming string for column "+j);
             defaultRow(j) = StructField(columnDescription,StringType, true)
@@ -284,28 +272,15 @@ private[excel] class DefaultSource
         hConf.set(key, value);
       }
     }
+    val hocr = new HadoopOfficeReadConfiguration(hConf)
     val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hConf))
 
 
 
     // convert the Excel to a dataframe consisting of simple data types
     val simpleMode: Boolean = options.getOrElse(CONF_SIMPLEMODE, DEFAULT_SIMPLEMODE).toBoolean
-    // use the first row of the Excel as header descriptors (only valid in simpleMode)
-    var useHeader: Boolean = options.getOrElse(CONF_USEHEADER, DEFAULT_USEHEADER).toBoolean
-    // locale for interpreting numbers etc.
-    val localeBCP47: String = options.getOrElse(HadoopOfficeReadConfiguration.CONF_LOCALE.substring("hadoopoffice.".length()), "")
-    var locale: Locale = Locale.getDefault() // only for determining the datatype
-    if (!"".equals(localeBCP47)) {
-      locale = new Locale.Builder().setLanguageTag(localeBCP47).build()
-    }
-    val datelocaleBCP47: String = options.getOrElse(CONF_SIMPLEMODE_DATELOCALE, DEFAULT_SIMPLEMODE_DATELOCALE)
-    var datelocale: Locale = Locale.getDefault()
-      if (!"".equals(datelocaleBCP47)) {
-        datelocale = new Locale.Builder().setLanguageTag(datelocaleBCP47).build()
-      }
-    val decimalFormat =  NumberFormat.getInstance(locale).asInstanceOf[DecimalFormat]
-    val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, datelocale).asInstanceOf[SimpleDateFormat]
-    val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(dateFormat,decimalFormat )
+
+    val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(hocr.getSimpleDateFormat,hocr.getSimpleDecimalFormat,hocr.getSimpleDateTimeFormat )
     // configure simpleConverter with schema
 
     val convSchema : Array[GenericDataType]  = new Array[GenericDataType](dataSchema.fields.length)
@@ -334,9 +309,7 @@ private[excel] class DefaultSource
     excelSimpleConverter.setSchemaRow(convSchema)
     val broadcastConverter = sparkSession.sparkContext.broadcast(excelSimpleConverter)
     (file: PartitionedFile) => {
-      if (useHeader) {
-        broadcastedHadoopConf.value.value.set(HadoopOfficeReadConfiguration.CONF_READHEADER,"true")
-      }
+
       val reader = new HadoopFileExcelReader(file, broadcastedHadoopConf.value.value)
       Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => reader.close()))
 
@@ -377,9 +350,18 @@ private[excel] class DefaultSource
               // we leverage the converter
 
             val excelRowArray = excelrow.get
-            val convertedRow=broadcastConverter.value.getDataAccordingToSchema(excelRowArray.asInstanceOf[Array[SpreadSheetCellDAO]])
+            var convertedRow=broadcastConverter.value.getDataAccordingToSchema(excelRowArray.asInstanceOf[Array[SpreadSheetCellDAO]])
 
             var rowData: Seq[Any] = Seq()
+            // check if dataSchema is larger than actual columns in row
+
+            if (convertedRow.length<dataSchema.fields.length) { // fill up the remaining
+              val tempRow: Array[AnyRef] = new Array[AnyRef](dataSchema.length)
+              for (i <-0 to convertedRow.length) {
+                tempRow(i)=convertedRow(i)
+              }
+              convertedRow=tempRow
+            }
             // parse only the columns in required schema
             for (col <- requiredSchema.fields) {
               // find out at which position in the schema that field is

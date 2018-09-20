@@ -34,7 +34,8 @@ import org.apache.spark.sql.execution.datasources.OutputWriter
 import org.apache.spark.sql.types._
 
 import org.zuinnote.hadoop.office.format.common.dao.SpreadSheetCellDAO
-import org.zuinnote.hadoop.office.format.common.util.MSExcelUtil
+import org.zuinnote.hadoop.office.format.common.HadoopOfficeWriteConfiguration
+import org.zuinnote.hadoop.office.format.common.util.msexcel.MSExcelUtil
 import org.zuinnote.hadoop.office.format.mapreduce._
 
 import org.apache.commons.logging.LogFactory
@@ -57,26 +58,19 @@ private[excel] class ExcelOutputWriter(
 
   private val recordWriter: RecordWriter[NullWritable, SpreadSheetCellDAO] = new ExcelFileOutputFormat().getRecordWriter(context)
   private var currentRowNum: Int = 0;
+  private val howc = new HadoopOfficeWriteConfiguration(context.getConfiguration,"")
   private val defaultSheetName: String = options.getOrElse("write.spark.defaultsheetname", "Sheet1")
-  private var useHeader: Boolean = options.getOrElse("write.spark.useHeader", "false").toBoolean
-  private var dateFormat: String = options.getOrElse("write.spark.datelocale", "US")
-  private val localeBCP47: String = options.getOrElse(HadoopOfficeWriteConfiguration.CONF_LOCALE.substring("hadoopoffice.".length()), "")
-  private var locale: Locale = Locale.getDefault() // only for determining the datatype    
-      if (!"".equals(localeBCP47)) {
-        locale = new Locale.Builder().setLanguageTag(localeBCP47).build()
-  }
+  private var useHeader: Boolean = howc.getWriteHeader
   private var converter: InternalRow => Row = _
   converter = CatalystTypeConverters.createToScalaConverter(dataSchema).asInstanceOf[InternalRow => Row]
-   var datelocale: Locale = Locale.getDefault()
-      if (!"".equals(dateFormat)) {
-        datelocale = new Locale.Builder().setLanguageTag(dateFormat).build()
-      }
-  private var sdf = DateFormat.getDateInstance(DateFormat.SHORT, datelocale).asInstanceOf[SimpleDateFormat]
-  private val decimalFormat = NumberFormat.getInstance(locale).asInstanceOf[DecimalFormat]
-  private val simpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(sdf,decimalFormat)
+
+  private val dateFormat = howc.getSimpleDateFormat
+  private val decimalFormat = howc.getSimpleDecimalFormat
+  private val dateTimeFormat = howc.getSimpleDateTimeFormat
+  private val simpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(dateFormat,decimalFormat,dateTimeFormat)
 /***
 *
-* Writes a row to Excel (Spark 2.2)
+* Writes a row to Excel (Spark 2.2+)
 *
 * The data can either be of a
 * primitive type (Boolean, Byte, Short, Integer, Float, String, BigDecimal, Date,TimeStamp). In this case each value is written in the same row in Excel
@@ -111,7 +105,7 @@ private[excel] class ExcelOutputWriter(
       }
       currentRowNum += 1
       useHeader = false
-    } 
+    }
     // for each value in the row
     if (row.size>0) {
       var currentColumnNum = 0;

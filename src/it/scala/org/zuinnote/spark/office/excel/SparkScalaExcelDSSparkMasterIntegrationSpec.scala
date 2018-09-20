@@ -50,7 +50,7 @@ import org.apache.hadoop.io.compress.Decompressor
 import org.apache.hadoop.io.compress.SplittableCompressionCodec
 import org.apache.hadoop.io.compress.SplitCompressionInputStream
 
-import org.zuinnote.hadoop.office.format.common.parser.MSExcelParser
+import org.zuinnote.hadoop.office.format.common.parser.msexcel.MSExcelParser
 import org.zuinnote.hadoop.office.format.common.HadoopOfficeReadConfiguration
 import org.zuinnote.hadoop.office.format.common.dao.SpreadSheetCellDAO
 
@@ -278,7 +278,7 @@ When("store as Excel file on DFS")
 df.write
     .format("org.zuinnote.spark.office.excel")
   .option("write.locale.bcp47", "de")
-  .option("write.spark.useHeader",true)
+  .option("hadoopoffice.write.header.write",true)
   .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 Then("stored Excel file on DFS can be read correctly")
 // fetch results
@@ -318,12 +318,13 @@ val df = Seq ((1000L, 2.1, "test"),(2000L,3.1,"test2")).toDF("column1","column2"
 When("store as Excel file on DFS")
 df.repartition(1).write
     .format("org.zuinnote.spark.office.excel")
-  .option("write.locale.bcp47", "de")
+  .option("hadoopoffice.write.locale.bcp47", "de")
+  .option("hadoopoffice.write.header.write",false)
   .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 
 Then("stored Excel file on DFS can be read correctly")
 // fetch results
-val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "en").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "en").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 assert(2==dfIn.count)
 val rowsDF=dfIn.select(explode(dfIn("rows")).alias("rows"))
 val formattedValues = rowsDF.select("rows.formattedValue").collect
@@ -362,7 +363,7 @@ val classLoader = getClass().getClassLoader()
     dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
 When("loaded by Excel data source")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").option("read.spark.useHeader", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
 assert(9==df.schema.fields.length)
@@ -492,14 +493,14 @@ val classLoader = getClass().getClassLoader()
     dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
 When("loaded by Excel data source and written back")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").option("read.spark.useHeader", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
 df.printSchema
 df.write
     .format("org.zuinnote.spark.office.excel")
   .option("write.locale.bcp47", "de")
-  .option("write.spark.useHeader",true)
+  .option("hadoopoffice.write.header.write",true)
   .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
-val df2=sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").option("read.spark.useHeader", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+val df2=sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
 assert(9==df2.schema.fields.length)
