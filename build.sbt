@@ -27,7 +27,7 @@ scalacOptions += "-target:jvm-1.8"
 
 artifact in (Compile, assembly) := {
   val art = (artifact in (Compile, assembly)).value
-  art.withClassifier(Some("assembly"))
+  art.withClassifier(Some(""))
 }
 
 addArtifact(artifact in (Compile, assembly), assembly)
