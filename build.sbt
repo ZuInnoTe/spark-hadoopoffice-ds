@@ -25,6 +25,13 @@ crossScalaVersions := Seq("2.11.12")
 
 scalacOptions += "-target:jvm-1.8"
 
+artifact in (Compile, assembly) := {
+  val art = (artifact in (Compile, assembly)).value
+  art.withClassifier(Some("assembly"))
+}
+
+addArtifact(artifact in (Compile, assembly), assembly)
+
 assemblyShadeRules in assembly := Seq(
    ShadeRule.rename("org.apache.commons.compress.**" -> "hadoopoffice.shade.org.apache.commons.compress.@1").inAll
 )
