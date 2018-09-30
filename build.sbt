@@ -35,6 +35,10 @@ addArtifact(artifact in (Compile, assembly), assembly)
 assemblyShadeRules in assembly := Seq(
    ShadeRule.rename("org.apache.commons.compress.**" -> "hadoopoffice.shade.org.apache.commons.compress.@1").inAll
 )
+assemblyJarName in assembly := {
+     val newName = s"${name.value}_${scalaBinaryVersion.value}-${version.value}.jar"
+     newName
+}
 
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
 
