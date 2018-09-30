@@ -36,7 +36,14 @@ assemblyShadeRules in assembly := Seq(
    ShadeRule.rename("org.apache.commons.compress.**" -> "hadoopoffice.shade.org.apache.commons.compress.@1").inAll
 )
 
+assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
 
+assemblyMergeStrategy in assembly :=  {
+    case PathList("META-INF/*.RSA", "META-INF/*.SF","META-INF/*.DSA") => MergeStrategy.discard
+    case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+   oldStrategy(x)
+}
 libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.2.0" % "compile"
 
 // following three libraries are only needed for digital signatures
