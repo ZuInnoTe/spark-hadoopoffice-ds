@@ -25,11 +25,11 @@ Additionally the following options exist:
 
 * "read.spark.simpleMode" infers the schema of the DataFrame from the data in the Excel or use a custom schema. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). If the schema is inferred it is done only based on one file in the directory. Additionally, the conversion of Decimals is based on the locale that you define (see hadoopoffice options from above). True if schema should be inferred, False if not. Default: False
 * "read.spark.simpleMode.maxInferRows" (as of 1.1.0). This defines the maximum rows to read for inferring the schema. This is useful if you know already that the schema can be determined from a given number of rows. Alternatively, if you want to provide a custom schema set this to 0. Default: all rows ("-1")
-* There are also other options related to headers, locales rtc. (see options from HadoopOffice library)
+* There are also other options related to headers, locales etc. (see options from HadoopOffice library)
 
 There are the following options related to Spark in case you need to write rows containing primitive types. In this case a default sheetname need to be set:
 * "write.spark.defaultsheetname", any valid sheetname, e.g. Sheet1
-* There are also other options related to headers, locales rtc. (see options from HadoopOffice library)
+* There are also other options related to headers, locales etc. (see options from HadoopOffice library)
 
 
 Additionally, the following options of the standard Hadoop API are supported:
@@ -48,7 +48,7 @@ artifactId: spark-hadoopoffice-ds_2.11
 
 version: 1.2.0
 
-A lot of options changed in version 1.2.0 to harmoize behavior with other Big Data platforms. Read carefully the documentation.
+A lot of options changed in version 1.2.0 to harmonize behavior with other Big Data platforms. Read carefully the documentation and test your application.
 
 Note: If you require Scala 2.10 then you cannot use this data source, but you can use the Hadoop FileFormat if you want to use the latest HadoopOffice version, cf. an example for [reading](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-Excel-document-using-Spark-1.x) and [writing](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-Excel-document-using-Spark-1.x).
 
