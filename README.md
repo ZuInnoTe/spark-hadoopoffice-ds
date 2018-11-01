@@ -109,7 +109,7 @@ Another option is to infer the schema of primitive Spark SQL DataTypes automatic
 val sqlContext = sparkSession.sqlContext
 val df = sqlContext.read
     .format("org.zuinnote.spark.office.excel")
-    .option("read.locale.bcp47", "us").option("spark.read.simpleMode",true)  
+    .option("read.locale.bcp47", "us").option("read.spark.simpleMode",true)  
 .load(args(0))
 
  ```
