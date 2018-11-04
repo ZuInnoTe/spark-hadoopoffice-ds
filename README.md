@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds.svg?branch=master)](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ebd5a75819fb4636ad176f30078fd776)](https://www.codacy.com/app/jornfranke/spark-hadoopoffice-ds?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ZuInnoTe/spark-hadoopoffice-ds&amp;utm_campaign=Badge_Grade)
 
-A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). This Spark datasource assumes at least Spark 2.0.1. However, the HadoopOffice library can also be used directly from Spark 1.x (see [how to](https://github.com/ZuInnoTe/hadoopoffice/wiki) section). Currently this datasource supports the following formats of the HadoopOffice library:
+A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). This Spark datasource assumes at least Spark 2.0.1 (but we recommend at least Spark 2.3.0) and Scala 2.11. However, the HadoopOffice library can also be used directly from Spark 1.x and/or Scala 2.10 (see [how to](https://github.com/ZuInnoTe/hadoopoffice/wiki) section). Currently this datasource supports the following formats of the HadoopOffice library:
 
 * Excel
   * Datasource format: org.zuinnote.spark.office.Excel
@@ -22,18 +22,15 @@ All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopof
 
 
 Additionally the following options exist:
-* "read.spark.useHeader" interpret the first row of the Excel as column names of the data frame, True if headers should be read, False if not. Default: False. Check also out [further options](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format#header) to deal with headers and skipping lines in other sheets by configuring the HadoopOffice library.
+
 * "read.spark.simpleMode" infers the schema of the DataFrame from the data in the Excel or use a custom schema. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). If the schema is inferred it is done only based on one file in the directory. Additionally, the conversion of Decimals is based on the locale that you define (see hadoopoffice options from above). True if schema should be inferred, False if not. Default: False
 * "read.spark.simpleMode.maxInferRows" (as of 1.1.0). This defines the maximum rows to read for inferring the schema. This is useful if you know already that the schema can be determined from a given number of rows. Alternatively, if you want to provide a custom schema set this to 0. Default: all rows ("-1")
-* "read.spark.simpleMode.dateLocale" (as of 1.1.0). This is an experimental options and defines the date locale (in [BCP47](https://tools.ietf.org/html/bcp47) format) for parsing dates in simple mode. Due to a POI speciality in most of the cases (even if you use Excel in a different language) it needs to be set to US. Defaults to "US". 
-* "read.spark.simpleMode.datePattern" (as of 1.2.0). This is an experimental option and defines the date pattern for parsing dates in simple mode (overrides "read.spark.simpleMode.dateLocale", if defined). You can define here any date format using the patterns defined in [SimpleDateFormat](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html). Default: ""
-* "read.spark.simpleMode.dateTimeLocale" (as of 1.2.0). This is an experimental options and defines the date locale (in [BCP47](https://tools.ietf.org/html/bcp47) format) for parsing date/time in simple mode. Defaults to "US". 
-* "read.spark.simpleMode.dateTimePattern" (as of 1.2.0). This is an experimental option and defines the date pattern for parsing timestamps in simple mode (overrides "read.spark.simpleMode.dateTimeLocale"). You can define here any date time format using the patterns defined in [SimpleDateFormat](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html). Default: "" (means that it defaults to the [java.sql.Timestamp](https://docs.oracle.com/javase/8/docs/api/java/sql/Timestamp.html) pattern).
+* There are also other options related to headers, locales etc. (see options from HadoopOffice library)
 
 There are the following options related to Spark in case you need to write rows containing primitive types. In this case a default sheetname need to be set:
 * "write.spark.defaultsheetname", any valid sheetname, e.g. Sheet1
-* "write.spark.datelocale" (changed in 1.1.1), date formatting used for writing, due to a particularity of Apache POI and Excel most of the time US dateformat is the correct one (Excel converts it automatically to the right dateformat in the language of the user). Default: MM/dd/yyyy
-* "write.spark.useHeader" use the column names of the dataframe as headers in Excel (=first row in Excel), True if headers should be written, False if not. Default: False
+* There are also other options related to headers, locales etc. (see options from HadoopOffice library)
+
 
 Additionally, the following options of the standard Hadoop API are supported:
 * "mapreduce.output.fileoutputformat.compress", true if output should be compressed, false if not. Note that many office formats have already a build-in compression so an additional compression may not make sense.
@@ -42,13 +39,6 @@ Additionally, the following options of the standard Hadoop API are supported:
 
 
 # Dependency
-## Scala 2.10
-
-groupId: com.github.zuinnote
-
-artifactId: spark-hadoopoffice-ds_2.10
-
-version: 1.1.1
 
 ## Scala 2.11
  
@@ -56,7 +46,13 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.1.1
+version: 1.2.0
+
+A lot of options changed in version 1.2.0 to harmonize behavior with other Big Data platforms. Read carefully the documentation and test your application.
+
+Note: If you require Scala 2.10 then you cannot use this data source, but you can use the Hadoop FileFormat if you want to use the latest HadoopOffice version, cf. an example for [reading](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-Excel-document-using-Spark-1.x) and [writing](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-Excel-document-using-Spark-1.x).
+
+Alternatively you can use the older version of this data source: 1.1.1 (see [documentation](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/tree/s2-ho-1.1.1))
 
 # Schema
 ## Excel File
@@ -113,7 +109,7 @@ Another option is to infer the schema of primitive Spark SQL DataTypes automatic
 val sqlContext = sparkSession.sqlContext
 val df = sqlContext.read
     .format("org.zuinnote.spark.office.excel")
-    .option("read.locale.bcp47", "us").option("spark.read.simpleMode",true)  
+    .option("read.locale.bcp47", "us").option("read.spark.simpleMode",true)  
 .load(args(0))
 
  ```
@@ -174,7 +170,7 @@ df.show();
 ```
 library(SparkR)
 
-Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.1.0" "sparkr-shell"')
+Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.2.0" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
 df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "us")
