@@ -21,7 +21,7 @@ publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.
 fork  := true
 
 
-crossScalaVersions := Seq("2.11.12")
+crossScalaVersions := Seq("2.11.12","2.12.7")
 
 scalacOptions += "-target:jvm-1.8"
 
@@ -55,9 +55,9 @@ libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.60" % "com
 libraryDependencies += "org.bouncycastle" % "bcpkix-jdk15on" % "1.60" % "compile"
 libraryDependencies += "org.apache.santuario" % "xmlsec" % "2.1.2" % "compile"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.3.0" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.0" % "provided"
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.3.0" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0" % "provided"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test,it"
 

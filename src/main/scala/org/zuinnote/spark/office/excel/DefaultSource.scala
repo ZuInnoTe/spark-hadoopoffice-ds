@@ -165,7 +165,7 @@ private[excel] class DefaultSource
       // create a partitioned file
       val partFile = new PartitionedFile(null, file.getPath().toUri().toString(), 0, file.getLen(), Array.empty)
       val reader = new HadoopFileExcelReader(partFile, broadcastedHadoopConf.value.value)
-      Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => reader.close()))
+      Option(TaskContext.get()).foreach(_.addTaskCompletionListener[Unit](_ => reader.close()))
 
       var i = 0
       val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(hocr.getSimpleDateFormat,hocr.getSimpleDecimalFormat,hocr.getSimpleDateTimeFormat );
@@ -311,7 +311,7 @@ private[excel] class DefaultSource
     (file: PartitionedFile) => {
 
       val reader = new HadoopFileExcelReader(file, broadcastedHadoopConf.value.value)
-      Option(TaskContext.get()).foreach(_.addTaskCompletionListener(_ => reader.close()))
+      Option(TaskContext.get()).foreach(_.addTaskCompletionListener[Unit](_ => reader.close()))
 
       reader.map { excelrow => // it is an arraywritable of SpreadSheetCellDAO
         {
