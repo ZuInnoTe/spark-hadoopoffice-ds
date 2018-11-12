@@ -40,6 +40,8 @@ Additionally, the following options of the standard Hadoop API are supported:
 
 # Dependency
 
+A lot of options changed in version 1.2.0 to harmonize behavior with other Big Data platforms. Read carefully the documentation and test your application.
+
 ## Scala 2.11
  
 groupId: com.github.zuinnote
@@ -48,7 +50,17 @@ artifactId: spark-hadoopoffice-ds_2.11
 
 version: 1.2.1
 
-A lot of options changed in version 1.2.0 to harmonize behavior with other Big Data platforms. Read carefully the documentation and test your application.
+## Scala 2.12
+
+groupId: com.github.zuinnote
+
+artifactId: spark-hadoopoffice-ds_2.12
+
+version: 1.2.1
+
+The Scala 2.12 version requires at least Spark 2.4.0
+
+## Older Scala versions
 
 Note: If you require Scala 2.10 then you cannot use this data source, but you can use the Hadoop FileFormat if you want to use the latest HadoopOffice version, cf. an example for [reading](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-Excel-document-using-Spark-1.x) and [writing](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-Excel-document-using-Spark-1.x).
 
