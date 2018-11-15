@@ -280,8 +280,7 @@ private[excel] class DefaultSource
     // convert the Excel to a dataframe consisting of simple data types
     val simpleMode: Boolean = options.getOrElse(CONF_SIMPLEMODE, DEFAULT_SIMPLEMODE).toBoolean
 
-    val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(hocr.getSimpleDateFormat,hocr.getSimpleDecimalFormat,hocr.getSimpleDateTimeFormat )
-    // configure simpleConverter with schema
+      // configure simpleConverter with schema
 
     val convSchema : Array[GenericDataType]  = new Array[GenericDataType](dataSchema.fields.length)
     var i=0;
@@ -305,10 +304,15 @@ private[excel] class DefaultSource
       }
          i+=1
     }
+    val broadcastSchema = sparkSession.sparkContext.broadcast(convSchema)
+    val broadcastSimpleDateFormat = sparkSession.sparkContext.broadcast(hocr.getSimpleDateFormat)
+    val broadcastSimpleDecimalFormat = sparkSession.sparkContext.broadcast(hocr.getSimpleDecimalFormat)
+    val broadcastSimpleDateTimeFormat = sparkSession.sparkContext.broadcast(hocr.getSimpleDateTimeFormat)
 
-    excelSimpleConverter.setSchemaRow(convSchema)
-    val broadcastConverter = sparkSession.sparkContext.broadcast(excelSimpleConverter)
     (file: PartitionedFile) => {
+     // the converter clones the objects to avoid racing conditions among different threads
+      val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(broadcastSimpleDateFormat.value,broadcastSimpleDecimalFormat.value,broadcastSimpleDateTimeFormat.value )
+      excelSimpleConverter.setSchemaRow(broadcastSchema.value)
 
       val reader = new HadoopFileExcelReader(file, broadcastedHadoopConf.value.value)
       Option(TaskContext.get()).foreach(_.addTaskCompletionListener[Unit](_ => reader.close()))
@@ -350,7 +354,7 @@ private[excel] class DefaultSource
               // we leverage the converter
 
             val excelRowArray = excelrow.get
-            var convertedRow=broadcastConverter.value.getDataAccordingToSchema(excelRowArray.asInstanceOf[Array[SpreadSheetCellDAO]])
+            var convertedRow=excelSimpleConverter.getDataAccordingToSchema(excelRowArray.asInstanceOf[Array[SpreadSheetCellDAO]])
 
             var rowData: Seq[Any] = Seq()
             // check if dataSchema is larger than actual columns in row
