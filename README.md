@@ -48,7 +48,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.2.1
+version: 1.2.2
 
 ## Scala 2.12
 
@@ -56,7 +56,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.12
 
-version: 1.2.1
+version: 1.2.2
 
 The Scala 2.12 version requires at least Spark 2.4.0
 
@@ -64,7 +64,7 @@ The Scala 2.12 version requires at least Spark 2.4.0
 
 Note: If you require Scala 2.10 then you cannot use this data source, but you can use the Hadoop FileFormat if you want to use the latest HadoopOffice version, cf. an example for [reading](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-Excel-document-using-Spark-1.x) and [writing](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-Excel-document-using-Spark-1.x).
 
-Alternatively you can use the older version of this data source: 1.1.1 (see [documentation](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/tree/s2-ho-1.1.1))
+Alternatively you can use the older version of this data source: 1.1.1 (see [documentation](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/tree/s2-ho-1.1.1)). However, in this case you will miss features and bug fixes.
 
 # Schema
 ## Excel File
@@ -182,7 +182,7 @@ df.show();
 ```
 library(SparkR)
 
-Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.2.1" "sparkr-shell"')
+Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.2.2" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
 df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "us")
