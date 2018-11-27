@@ -86,7 +86,7 @@ root
  |    |    |-- sheetName: string (nullable = true)                                                                                                                          
  ```
  
- If you use the option "read.spark.simpleMode" then the schema consists of primitve Spark SQL DataTypes. For example, for [this Excel file](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/blob/master/src/it/resources/testsimple.xlsx?raw=true) the following schema is automatically inferred (note also the option "read.spark.useHeader" is applied):
+ If you use the option "read.spark.simpleMode" then the schema consists of primitve Spark SQL DataTypes. For example, for [this Excel file](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/blob/master/src/it/resources/testsimple.xlsx?raw=true) the following schema is automatically inferred (note also the option "hadoopoffice.read.header.read" is applied):
  ```
  root
  |-- decimalsc1: decimal(2,1) (nullable = true)
