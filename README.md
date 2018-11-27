@@ -126,11 +126,11 @@ val df = sqlContext.read
 
  ```
 
-This option can be combined with spark.read.useHeader to interpret the first row in the Excel as column names of the DataFrame.
+This option can be combined with hadoopoffice.read.header.read to interpret the first row in the Excel as column names of the DataFrame.
 
 ## Writing
 You can have two options for writing data to Excel files:
-* You can have a dataframe with columns of simple datatypes (no map, no list, no struct) that should be written in rows of an Excel sheet. You can define the sheetname by using the option "write.spark.defaultsheetname" (default is "Sheet1"). In this way, you can only write values, but no formulas, comments etc. Additionally you can define the option "write.spark.useHeader" to write the column names of the DataFrame as the first row of the Excel.
+* You can have a dataframe with columns of simple datatypes (no map, no list, no struct) that should be written in rows of an Excel sheet. You can define the sheetname by using the option "write.spark.defaultsheetname" (default is "Sheet1"). In this way, you can only write values, but no formulas, comments etc. Additionally you can define the option "hadoopoffice.write.header.write" to write the column names of the DataFrame as the first row of the Excel.
 * You can have a dataframe with arrays where each element corresponds to the schema defined above. In this case you have full control where the data ends, you can use formulas, comments etc.
 
 The second option is illustrated in this snippet (Assuming US locale for the Excel). It creates a simple Excel document with 4 cells. They are stored in sheet "Sheet1". The following Cells exist (A1 with value 1), (A2 with value 2 and comment), (A3 with value 3), (B1 with formula A2+A3). The resulting Excel file is stored in the directory /home/user/office/output
