@@ -48,7 +48,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.2.1
+version: 1.2.2
 
 ## Scala 2.12
 
@@ -56,7 +56,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.12
 
-version: 1.2.1
+version: 1.2.2
 
 The Scala 2.12 version requires at least Spark 2.4.0
 
@@ -64,7 +64,7 @@ The Scala 2.12 version requires at least Spark 2.4.0
 
 Note: If you require Scala 2.10 then you cannot use this data source, but you can use the Hadoop FileFormat if you want to use the latest HadoopOffice version, cf. an example for [reading](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-Excel-document-using-Spark-1.x) and [writing](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-Excel-document-using-Spark-1.x).
 
-Alternatively you can use the older version of this data source: 1.1.1 (see [documentation](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/tree/s2-ho-1.1.1))
+Alternatively you can use the older version of this data source: 1.1.1 (see [documentation](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/tree/s2-ho-1.1.1)). However, in this case you will miss features and bug fixes.
 
 # Schema
 ## Excel File
@@ -86,7 +86,7 @@ root
  |    |    |-- sheetName: string (nullable = true)                                                                                                                          
  ```
  
- If you use the option "read.spark.simpleMode" then the schema consists of primitve Spark SQL DataTypes. For example, for [this Excel file](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/blob/master/src/it/resources/testsimple.xlsx?raw=true) the following schema is automatically inferred (note also the option "read.spark.useHeader" is applied):
+ If you use the option "read.spark.simpleMode" then the schema consists of primitve Spark SQL DataTypes. For example, for [this Excel file](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/blob/master/src/it/resources/testsimple.xlsx?raw=true) the following schema is automatically inferred (note also the option "hadoopoffice.read.header.read" is applied):
  ```
  root
  |-- decimalsc1: decimal(2,1) (nullable = true)
@@ -126,11 +126,11 @@ val df = sqlContext.read
 
  ```
 
-This option can be combined with spark.read.useHeader to interpret the first row in the Excel as column names of the DataFrame.
+This option can be combined with hadoopoffice.read.header.read to interpret the first row in the Excel as column names of the DataFrame.
 
 ## Writing
 You can have two options for writing data to Excel files:
-* You can have a dataframe with columns of simple datatypes (no map, no list, no struct) that should be written in rows of an Excel sheet. You can define the sheetname by using the option "write.spark.defaultsheetname" (default is "Sheet1"). In this way, you can only write values, but no formulas, comments etc. Additionally you can define the option "write.spark.useHeader" to write the column names of the DataFrame as the first row of the Excel.
+* You can have a dataframe with columns of simple datatypes (no map, no list, no struct) that should be written in rows of an Excel sheet. You can define the sheetname by using the option "write.spark.defaultsheetname" (default is "Sheet1"). In this way, you can only write values, but no formulas, comments etc. Additionally you can define the option "hadoopoffice.write.header.write" to write the column names of the DataFrame as the first row of the Excel.
 * You can have a dataframe with arrays where each element corresponds to the schema defined above. In this case you have full control where the data ends, you can use formulas, comments etc.
 
 The second option is illustrated in this snippet (Assuming US locale for the Excel). It creates a simple Excel document with 4 cells. They are stored in sheet "Sheet1". The following Cells exist (A1 with value 1), (A2 with value 2 and comment), (A3 with value 3), (B1 with formula A2+A3). The resulting Excel file is stored in the directory /home/user/office/output
@@ -182,7 +182,7 @@ df.show();
 ```
 library(SparkR)
 
-Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.2.1" "sparkr-shell"')
+Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.2.2" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
 df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "us")
