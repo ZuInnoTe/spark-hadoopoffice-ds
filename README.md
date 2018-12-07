@@ -67,7 +67,12 @@ Note: If you require Scala 2.10 then you cannot use this data source, but you ca
 Alternatively you can use the older version of this data source (not recommended): 1.1.1 (see [documentation](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/tree/s2-ho-1.1.1)). However, in this case you will miss features and bug fixes.
 
 # Schema
-## Excel File
+There are two different schemas that you can configure:
+* Excel Cell Schema - here more information of the Excel cell are exposed (e.g. formattedValue, formula, address etc.)
+* Simple Schema - here the data is exposed using Spark datatypes (e.g. int, long, decimal, string, date etc.)
+
+The Excel cell schema is very useful in case you want to have more information about the cell and the simple schema is useful in case you want to work only with the data (e.g. doing calculations, filtering by date etc.).
+## Excel Cell
 An Excel file loaded into a DataFrame  has the following schema. Basically each row contains an Array with all Excel cells in this row. For each cell the following information are available:
 * formattedValue: This is what you see when you open Excel
 * comment: A comment for this cell
@@ -85,7 +90,7 @@ root
  |    |    |-- address: string (nullable = true)                                                                                                                                       
  |    |    |-- sheetName: string (nullable = true)                                                                                                                          
  ```
- 
+ ## Simple 
  If you use the option "read.spark.simpleMode" then the schema consists of primitve Spark SQL DataTypes. For example, for [this Excel file](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/blob/master/src/it/resources/testsimple.xlsx?raw=true) the following schema is automatically inferred (note also the option "hadoopoffice.read.header.read" is applied):
  ```
  root
