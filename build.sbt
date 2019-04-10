@@ -44,9 +44,8 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 
 assemblyMergeStrategy in assembly :=  {
     case PathList("META-INF/*.RSA", "META-INF/*.SF","META-INF/*.DSA") => MergeStrategy.discard
-    case x =>
-    val oldStrategy = (assemblyMergeStrategy in assembly).value
-   oldStrategy(x)
+    case x => MergeStrategy.first
+
 }
 libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.3.0" % "compile"
 
