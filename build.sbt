@@ -7,7 +7,7 @@ lazy val root = (project in file("."))
 .settings(
 organization := "com.github.zuinnote",
 name := "spark-hadoopoffice-ds",
-version := "1.2.4"
+version := "1.3.0"
 )
  .configs( IntegrationTest )
   .settings( Defaults.itSettings : _*)
@@ -48,11 +48,11 @@ assemblyMergeStrategy in assembly :=  {
     val oldStrategy = (assemblyMergeStrategy in assembly).value
    oldStrategy(x)
 }
-libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.2.4" % "compile"
+libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.3.0" % "compile"
 
 // following three libraries are only needed for digital signatures
-libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.60" % "compile"
-libraryDependencies += "org.bouncycastle" % "bcpkix-jdk15on" % "1.60" % "compile"
+libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.61" % "compile"
+libraryDependencies += "org.bouncycastle" % "bcpkix-jdk15on" % "1.61" % "compile"
 libraryDependencies += "org.apache.santuario" % "xmlsec" % "2.1.2" % "compile"
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.0" % "provided"
