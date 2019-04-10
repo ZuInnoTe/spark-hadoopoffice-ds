@@ -58,7 +58,11 @@ private[excel] class ExcelOutputWriter(
 
   private val recordWriter: RecordWriter[NullWritable, SpreadSheetCellDAO] = new ExcelFileOutputFormat().getRecordWriter(context)
   private var currentRowNum: Int = 0;
-  private val howc = new HadoopOfficeWriteConfiguration(context.getConfiguration,"")
+  val hadoopConf=context.getConfiguration
+  for ((k,v) <- options) {
+    hadoopConf.set(k,v)
+  }
+  private val howc = new HadoopOfficeWriteConfiguration(hadoopConf,"")
   private val defaultSheetName: String = options.getOrElse("write.spark.defaultsheetname", "Sheet1")
   private var useHeader: Boolean = howc.getWriteHeader
   private var converter: InternalRow => Row = _

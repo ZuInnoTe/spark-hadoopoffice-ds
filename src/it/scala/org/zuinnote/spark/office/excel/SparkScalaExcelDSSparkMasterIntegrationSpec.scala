@@ -493,18 +493,26 @@ val classLoader = getClass().getClassLoader()
     dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
 When("loaded by Excel data source and written back")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel")
+.option("hadoopoffice.read.locale.bcp47", "de")
+.option("hadoopoffice.read.simple.decimalFormat","de")
+
+.option("hadoopoffice.read.simple.dateFormat","de")
+.option("hadoopoffice.read.header.read", "true")
+.option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
 df.printSchema
 df.write
     .format("org.zuinnote.spark.office.excel")
-  .option("write.locale.bcp47", "de")
+  .option("hadoopoffice.write.locale.bcp47", "de")
   .option("hadoopoffice.write.header.write",true)
   .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
-val df2=sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+val df2=sqlContext.read.format("org.zuinnote.spark.office.excel")
+.option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
 assert(9==df2.schema.fields.length)
 // check columns correctly read
+
 assert("decimalsc1"==df2.columns(0))
 assert("booleancolumn"==df2.columns(1))
 assert("datecolumn"==df2.columns(2))
@@ -515,6 +523,7 @@ assert("shortcolumn"==df2.columns(6))
 assert("intcolumn"==df2.columns(7))
 assert("longcolumn"==df2.columns(8))
 // check data types
+
 assert(true==df2.schema.fields(0).dataType.isInstanceOf[DecimalType])
 assert(2==df2.schema.fields(0).dataType.asInstanceOf[DecimalType].precision)
 assert(1==df2.schema.fields(0).dataType.asInstanceOf[DecimalType].scale)
