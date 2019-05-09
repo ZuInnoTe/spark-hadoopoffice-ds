@@ -208,7 +208,7 @@ private[excel] class DefaultSource
           case t: GenericTimestampDataType => defaultRow += StructField(columnDescription,TimestampType, true)
           case _ => {
             LOG.warn("Unknown data type assuming string for column "+j);
-            defaultRow(j) = StructField(columnDescription,StringType, true)
+            defaultRow += StructField(columnDescription,StringType, true)
           }
         }
 
