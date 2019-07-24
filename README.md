@@ -148,6 +148,20 @@ val sRdd = sparkSession.sparkContext.parallelize(Seq(Seq("","","1","A1","Sheet1"
 .save("/home/user/office/output")
 ```
 Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-an-Excel-document-using-the-Spark2-datasource-API).
+
+You can write with partitions as follows. Let us assume you have an Excel with Name, Year, Month, Day columns and you want to create partitions by Year, Month, Day. Then you need to use the following code:
+ ```
+df.toDF.write.partionBy("year","month","day").format("org.zuinnote.spark.office.excel")
+.option("write.locale.bcp47", "us")
+.save("/home/user/office/output")
+ ```
+ 
+ This will create the following structure on HDFS (or the filesystem that is supported by Spark):
+  ```
+output/_SUCCESS
+output/year=2018/month=1/day=1/part-00000.xlsx
+output/year=2019/month=12/day=31/part-00000.xlsx
+ ```
 # Language bindings
 ## Scala
  This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format) and shows the total number of rows, the schema and the first 20 rows. The locale for formatting cell values is set to "us". Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API). 
