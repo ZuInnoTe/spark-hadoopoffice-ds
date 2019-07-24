@@ -18,7 +18,7 @@ Find here the status from the Continuous Integration service: https://travis-ci.
 Find the latest release information [here](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/releases)
 
 # Options
-All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format), such as metadata, encryption/decryption or low footprint mode, are supported. However, in the datasource you specify them without the prefix hadoopoffice. For example, instead of "hadoopoffice.read.locale.bcp47" you need to specify the option as "read.locale.bcp47".
+All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format), such as metadata, encryption/decryption or low footprint mode, are supported.
 
 
 Additionally the following options exist:
