@@ -18,7 +18,7 @@ Find here the status from the Continuous Integration service: https://travis-ci.
 Find the latest release information [here](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/releases)
 
 # Options
-All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format), such as metadata, encryption/decryption or low footprint mode, are supported. However, in the datasource you specify them without the prefix hadoopoffice. For example, instead of "hadoopoffice.read.locale.bcp47" you need to specify the option as "read.locale.bcp47".
+All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice/wiki/Hadoop-File-Format), such as metadata, encryption/decryption or low footprint mode, are supported.
 
 
 Additionally the following options exist:
@@ -148,6 +148,20 @@ val sRdd = sparkSession.sparkContext.parallelize(Seq(Seq("","","1","A1","Sheet1"
 .save("/home/user/office/output")
 ```
 Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-an-Excel-document-using-the-Spark2-datasource-API).
+
+You can write with partitions as follows (as of v 1.3.2). Let us assume you have an Excel with Name, Year, Month, Day columns and you want to create partitions by Year, Month, Day. Then you need to use the following code:
+ ```
+df.toDF.write.partitionBy("year","month","day").format("org.zuinnote.spark.office.excel")
+.option("write.locale.bcp47", "us")
+.save("/home/user/office/output")
+ ```
+ 
+ This will create the following structure on HDFS (or the filesystem that is supported by Spark):
+  ```
+output/_SUCCESS
+output/year=2018/month=1/day=1/part-00000.xlsx
+output/year=2019/month=12/day=31/part-00000.xlsx
+ ```
 # Language bindings
 ## Scala
  This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format) and shows the total number of rows, the schema and the first 20 rows. The locale for formatting cell values is set to "us". Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API). 
