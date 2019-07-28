@@ -477,6 +477,121 @@ assert(3147483647L==longcolumn(4).get(0))
 assert(10==longcolumn(5).get(0))
 }
 
+"A dataframe" should "be written in a partitioned manner" in {
+  dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
+dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
+// create input directory
+dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
+// copy test file
+val classLoader = getClass().getClassLoader()
+    // put testdata on DFS
+    val fileName: String="partitiontest.xlsx"
+    val fileNameFullLocal=classLoader.getResource(fileName).getFile()
+    val inputFile=new Path(fileNameFullLocal)
+    dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+When("loaded by Excel data source")
+val sqlContext = new SQLContext(sc)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+Then("data is correctly read and written to partitioned folders")
+// check size
+
+assert(5==df.count)
+// check inferred schema
+assert(4==df.schema.fields.length)
+// check columns correctly read
+assert("Name"==df.columns(0))
+assert("Year"==df.columns(1))
+assert("Month"==df.columns(2))
+assert("Day"==df.columns(3))
+// check data types
+assert(true==df.schema.fields(0).dataType.isInstanceOf[StringType])
+assert(true==df.schema.fields(1).dataType.isInstanceOf[IntegerType])
+assert(true==df.schema.fields(2).dataType.isInstanceOf[ByteType])
+assert(true==df.schema.fields(3).dataType.isInstanceOf[ByteType])
+// check data
+val namecolumn = df.select("Name").collect
+val yearcolumn = df.select("Year").collect
+val monthcolumn = df.select("Month").collect
+val daycolumn = df.select("Day").collect
+assert("Test Test"==namecolumn(0).get(0))
+assert("Martha MusterFrau"==namecolumn(1).get(0))
+assert("Max Mustermann"==namecolumn(2).get(0))
+assert("Karl Karlson"==namecolumn(3).get(0))
+assert("Lennie Lennardson"==namecolumn(4).get(0))
+assert(2019==yearcolumn(0).get(0))
+assert(2019==yearcolumn(1).get(0))
+assert(2018==yearcolumn(2).get(0))
+assert(2018==yearcolumn(3).get(0))
+assert(2018==yearcolumn(4).get(0))
+assert(1==monthcolumn(0).get(0))
+assert(1==monthcolumn(1).get(0))
+assert(4==monthcolumn(2).get(0))
+assert(2==monthcolumn(3).get(0))
+assert(2==monthcolumn(4).get(0))
+assert(12==daycolumn(0).get(0))
+assert(12==daycolumn(1).get(0))
+assert(7==daycolumn(2).get(0))
+assert(1==daycolumn(3).get(0))
+assert(1==daycolumn(4).get(0))
+// write
+df.write
+  .option("hadoopoffice.write.locale.bcp47", "de")
+  .option("hadoopoffice.write.header.write",true)
+  .partitionBy("Year","Month","Day")
+      .format("org.zuinnote.spark.office.excel")
+ .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+
+// check if partitions have been created
+assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2019/Month=1/Day=12")))
+assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2019/Month=1/Day=12")))
+assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2018/Month=4/Day=7")))
+assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2018/Month=2/Day=1")))
+assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2018/Month=2/Day=1")))
+
+// check if excels with partitions can be read correctly back
+val df2= sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+Then("data is correctly reread from partitioned folders")
+
+assert(5==df2.count)
+// check inferred schema
+assert(4==df2.schema.fields.length)
+// check columns correctly read
+assert("Name"==df2.columns(0))
+assert("Year"==df2.columns(1))
+assert("Month"==df2.columns(2))
+assert("Day"==df2.columns(3))
+// check data types
+assert(true==df2.schema.fields(0).dataType.isInstanceOf[StringType])
+assert(true==df2.schema.fields(1).dataType.isInstanceOf[IntegerType])
+assert(true==df2.schema.fields(2).dataType.isInstanceOf[IntegerType])
+assert(true==df2.schema.fields(3).dataType.isInstanceOf[IntegerType])
+// check data
+val name2column = df2.select("Name").collect
+val year2column = df2.select("Year").collect
+val month2column = df2.select("Month").collect
+val day2column = df2.select("Day").collect
+assert("Test Test"==name2column(0).get(0))
+assert("Martha MusterFrau"==name2column(1).get(0))
+assert("Karl Karlson"==name2column(2).get(0))
+assert("Lennie Lennardson"==name2column(3).get(0))
+assert("Max Mustermann"==name2column(4).get(0))
+assert(2019==year2column(0).get(0))
+assert(2019==year2column(1).get(0))
+assert(2018==year2column(2).get(0))
+assert(2018==year2column(3).get(0))
+assert(2018==year2column(4).get(0))
+assert(1==month2column(0).get(0))
+assert(1==month2column(1).get(0))
+assert(2==month2column(2).get(0))
+assert(2==month2column(3).get(0))
+assert(4==month2column(4).get(0))
+assert(12==day2column(0).get(0))
+assert(12==day2column(1).get(0))
+assert(1==day2column(2).get(0))
+assert(1==day2column(3).get(0))
+assert(7==day2column(4).get(0))
+}
+
 "An existing Excel file" should "be read in a dataframe with simple datatypes and an empty column" in {
 
 dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)

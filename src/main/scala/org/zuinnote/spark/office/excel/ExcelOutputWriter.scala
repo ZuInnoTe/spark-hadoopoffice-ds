@@ -28,6 +28,8 @@ import org.apache.hadoop.io.ArrayWritable
 import org.apache.hadoop.mapreduce.RecordWriter
 import org.apache.hadoop.mapreduce.TaskAttemptContext
 
+import org.apache.hadoop.fs.Path
+
 import org.apache.spark.sql.catalyst.{ CatalystTypeConverters, InternalRow }
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.execution.datasources.OutputWriter
@@ -56,7 +58,11 @@ private[excel] class ExcelOutputWriter(
    * that the data can be correctly partitioned
    */
 
-  private val recordWriter: RecordWriter[NullWritable, SpreadSheetCellDAO] = new ExcelFileOutputFormat().getRecordWriter(context)
+  private val recordWriter: RecordWriter[NullWritable, SpreadSheetCellDAO] = new ExcelFileOutputFormat(){
+    override def getDefaultWorkFile(context: TaskAttemptContext, extension: String): Path = {
+      new Path(path)
+    }
+  }.getRecordWriter(context)
   private var currentRowNum: Int = 0;
   val hadoopConf=context.getConfiguration
   for ((k,v) <- options) {

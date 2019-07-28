@@ -7,7 +7,7 @@ lazy val root = (project in file("."))
 .settings(
 organization := "com.github.zuinnote",
 name := "spark-hadoopoffice-ds",
-version := "1.3.1"
+version := "1.3.2"
 )
  .configs( IntegrationTest )
   .settings( Defaults.itSettings : _*)
