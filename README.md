@@ -151,7 +151,7 @@ Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-a
 
 You can write with partitions as follows. Let us assume you have an Excel with Name, Year, Month, Day columns and you want to create partitions by Year, Month, Day. Then you need to use the following code:
  ```
-df.toDF.write.partionBy("year","month","day").format("org.zuinnote.spark.office.excel")
+df.toDF.write.partitionBy("year","month","day").format("org.zuinnote.spark.office.excel")
 .option("write.locale.bcp47", "us")
 .save("/home/user/office/output")
  ```
