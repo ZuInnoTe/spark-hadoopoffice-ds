@@ -20,7 +20,6 @@ publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.
 
 fork  := true
 
-
 crossScalaVersions := Seq("2.11.12","2.12.7")
 
 scalacOptions += "-target:jvm-1.8"
