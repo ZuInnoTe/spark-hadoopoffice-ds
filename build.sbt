@@ -7,7 +7,7 @@ lazy val root = (project in file("."))
 .settings(
 organization := "com.github.zuinnote",
 name := "spark-hadoopoffice-ds",
-version := "1.3.3"
+version := "1.3.4"
 )
  .configs( IntegrationTest )
   .settings( Defaults.itSettings : _*)
@@ -20,7 +20,7 @@ publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.
 
 fork  := true
 
-crossScalaVersions := Seq("2.11.12","2.12.7")
+crossScalaVersions := Seq("2.11.12","2.12.10")
 
 scalacOptions += "-target:jvm-1.8"
 
@@ -48,18 +48,18 @@ assemblyMergeStrategy in assembly :=  {
      oldStrategy(x)
 
 }
-libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.3.3" % "compile"
+libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.3.4" % "compile"
 
 // following three libraries are only needed for digital signatures
-libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.60" % "compile"
-libraryDependencies += "org.bouncycastle" % "bcpkix-jdk15on" % "1.60" % "compile"
+libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.62" % "compile"
+libraryDependencies += "org.bouncycastle" % "bcpkix-jdk15on" % "1.62" % "compile"
 libraryDependencies += "org.apache.santuario" % "xmlsec" % "2.1.2" % "compile"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.0" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.4" % "provided"
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.4" % "provided"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test,it"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test,it"
 
 libraryDependencies += "javax.servlet" % "javax.servlet-api" % "3.0.1" % "it"
 
