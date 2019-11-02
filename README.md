@@ -48,7 +48,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.3.3
+version: 1.3.4
 
 ## Scala 2.12
 
@@ -56,7 +56,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.12
 
-version: 1.3.3
+version: 1.3.4
 
 The Scala 2.12 version requires at least Spark 2.4.0
 
@@ -201,7 +201,7 @@ df.show();
 ```
 library(SparkR)
 
-Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.3.3" "sparkr-shell"')
+Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.12:1.3.4" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
 df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "us")
