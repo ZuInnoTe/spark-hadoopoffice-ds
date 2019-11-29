@@ -55,6 +55,8 @@ libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.62" % "com
 libraryDependencies += "org.bouncycastle" % "bcpkix-jdk15on" % "1.62" % "compile"
 libraryDependencies += "org.apache.santuario" % "xmlsec" % "2.1.2" % "compile"
 
+libraryDependencies +=  "com.esotericsoftware" % "kryo-shaded" % "3.0.3" % "provided"
+
 libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.4" % "provided"
 
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.4" % "provided"

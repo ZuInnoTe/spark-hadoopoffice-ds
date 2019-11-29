@@ -15,11 +15,15 @@
  */
 package org.zuinnote.spark.office.excel
 
+
+import java.io._
+import scala.util.control.NonFatal
 import scala.collection.JavaConverters._
 import scala.util.control.Breaks._
 
 import java.text.DecimalFormat
-
+import com.esotericsoftware.kryo.{Kryo, KryoSerializable}
+import com.esotericsoftware.kryo.io.{Input, Output}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.Text
 import org.apache.hadoop.io.ArrayWritable
@@ -279,7 +283,8 @@ private[excel] class DefaultSource
 
     // convert the Excel to a dataframe consisting of simple data types
     val simpleMode: Boolean = options.getOrElse(CONF_SIMPLEMODE, DEFAULT_SIMPLEMODE).toBoolean
-
+    // avoid null pointer on executor
+    val bcHC = broadcastedHadoopConf.value;
       // configure simpleConverter with schema
 
     val convSchema : Array[GenericDataType]  = new Array[GenericDataType](dataSchema.fields.length)
@@ -415,7 +420,7 @@ private[excel] class DefaultSource
   }
 }
 
-private[excel] class SerializableConfiguration(@transient var value: Configuration) extends Serializable {
+private[excel] class SerializableConfiguration(@transient var value: Configuration) extends Serializable with KryoSerializable  {
 
   private def writeObject(out: ObjectOutputStream): Unit = {
     out.defaultWriteObject()
@@ -426,4 +431,26 @@ private[excel] class SerializableConfiguration(@transient var value: Configurati
     value = new Configuration(false)
     value.readFields(in)
   }
+  private def tryOrIOException[T](block: => T): T = {
+      try {
+        block
+      } catch {
+        case e: IOException =>
+
+          throw e
+        case NonFatal(e) =>
+          throw new IOException(e)
+      }
+    }
+
+    def write(kryo: Kryo, out: Output): Unit = {
+      val dos = new DataOutputStream(out)
+      value.write(dos)
+      dos.flush()
+    }
+
+    def read(kryo: Kryo, in: Input): Unit = {
+      value = new Configuration(false)
+      value.readFields(new DataInputStream(in))
+    }
 }
