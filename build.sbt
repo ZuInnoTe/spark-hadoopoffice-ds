@@ -20,7 +20,7 @@ publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.
 
 fork  := true
 
-crossScalaVersions := Seq("2.11.12","2.12.10")
+crossScalaVersions := Seq("2.11.12","2.12.11")
 
 scalacOptions += "-target:jvm-1.8"
 
@@ -48,7 +48,7 @@ assemblyMergeStrategy in assembly :=  {
      oldStrategy(x)
 
 }
-libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.3.7" % "compile"
+libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.3.8" % "compile"
 
 // following three libraries are only needed for digital signatures
 libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.62" % "compile"
@@ -57,17 +57,17 @@ libraryDependencies += "org.apache.santuario" % "xmlsec" % "2.1.2" % "compile"
 
 libraryDependencies +=  "com.esotericsoftware" % "kryo-shaded" % "3.0.3" % "provided"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.4" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.5" % "provided"
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.4" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.5" % "provided"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test,it"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.1" % "test,it"
 
 libraryDependencies += "javax.servlet" % "javax.servlet-api" % "3.0.1" % "it"
 
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.7.0" % "it" classifier "" classifier "tests"
+libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.7.5" % "it" classifier "" classifier "tests"
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-hdfs" % "2.7.0" % "it" classifier "" classifier "tests"
+libraryDependencies += "org.apache.hadoop" % "hadoop-hdfs" % "2.7.5" % "it" classifier "" classifier "tests"
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-minicluster" % "2.7.0" % "it"
+libraryDependencies += "org.apache.hadoop" % "hadoop-minicluster" % "2.7.5" % "it"
