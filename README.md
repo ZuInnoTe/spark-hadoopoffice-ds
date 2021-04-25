@@ -23,8 +23,8 @@ All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopof
 
 Additionally the following options exist:
 
-* "read.spark.simpleMode" infers the schema of the DataFrame from the data in the Excel or use a custom schema. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). If the schema is inferred it is done only based on one file in the directory. Additionally, the conversion of Decimals is based on the locale that you define (see hadoopoffice options from above). True if schema should be inferred, False if not. Default: False
-* "read.spark.simpleMode.maxInferRows" (as of 1.1.0). This defines the maximum rows to read for inferring the schema. This is useful if you know already that the schema can be determined from a given number of rows. Alternatively, if you want to provide a custom schema set this to 0. Default: all rows ("-1")
+* "read.spark.simplemnode" (Before 1.5: "read.spark.simpleMode") infers the schema of the DataFrame from the data in the Excel or use a custom schema. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). If the schema is inferred it is done only based on one file in the directory. Additionally, the conversion of Decimals is based on the locale that you define (see hadoopoffice options from above). True if schema should be inferred, False if not. Default: False
+* "read.spark.simpleMode.maxinferrows" (as of 1.1.0) (Before 1.5: "read.spark.simpleMode.maxInferRows"). This defines the maximum rows to read for inferring the schema. This is useful if you know already that the schema can be determined from a given number of rows. Alternatively, if you want to provide a custom schema set this to 0. Default: all rows ("-1")
 * There are also other options related to headers, locales etc. (see options from HadoopOffice library)
 
 There are the following options related to Spark in case you need to write rows containing primitive types. In this case a default sheetname need to be set:
@@ -43,12 +43,12 @@ Additionally, the following options of the standard Hadoop API are supported:
 A lot of options changed in version 1.2.0 to harmonize behavior with other Big Data platforms. Read carefully the documentation and test your application.
 
 ## Scala 2.11
- 
+
 groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.3.10
+version: 1.5.0
 
 ## Scala 2.12
 
@@ -56,7 +56,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.12
 
-version: 1.3.10
+version: 1.5.0
 
 The Scala 2.12 version requires at least Spark 2.4.0
 
@@ -90,7 +90,7 @@ root
  |    |    |-- address: string (nullable = true)                                                                                                                                       
  |    |    |-- sheetName: string (nullable = true)                                                                                                                          
  ```
- ## Simple 
+ ## Simple
  If you use the option "read.spark.simpleMode" then the schema consists of primitve Spark SQL DataTypes. For example, for [this Excel file](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/blob/master/src/it/resources/testsimple.xlsx?raw=true) the following schema is automatically inferred (note also the option "hadoopoffice.read.header.read" is applied):
  ```
  root
@@ -106,7 +106,7 @@ root
 
 
  ```
- 
+
 # Develop
 ## Reading
 As you can see in the schema, the datasource reads each Excel row in an array. Each element of the array is a structure describing an Excel cell. This structure describes the formatted value (based on the locale), the comment, the formula, the address of the cell in A1 format and the name of the sheet to which the cell belongs. In Scala you can easily read Excel files using the following snippet (assuming US locale for the Excel file):
@@ -118,7 +118,7 @@ val df = sqlContext.read
     .option("read.locale.bcp47", "us")  
 .load(args(0))
 ```
-Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API). 
+Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API).
 
 Another option is to infer the schema of primitive Spark SQL DataTypes automatically:
 
@@ -144,7 +144,7 @@ val sRdd = sparkSession.sparkContext.parallelize(Seq(Seq("","","1","A1","Sheet1"
 	val df= sRdd.toDF()
 	df.write
       .format("org.zuinnote.spark.office.excel")
-    .option("write.locale.bcp47", "us") 
+    .option("write.locale.bcp47", "us")
 .save("/home/user/office/output")
 ```
 Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-an-Excel-document-using-the-Spark2-datasource-API).
@@ -155,7 +155,7 @@ df.toDF.write.partitionBy("year","month","day").format("org.zuinnote.spark.offic
 .option("write.locale.bcp47", "us")
 .save("/home/user/office/output")
  ```
- 
+
  This will create the following structure on HDFS (or the filesystem that is supported by Spark):
   ```
 output/_SUCCESS
@@ -164,7 +164,7 @@ output/year=2019/month=12/day=31/part-00000.xlsx
  ```
 # Language bindings
 ## Scala
- This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format) and shows the total number of rows, the schema and the first 20 rows. The locale for formatting cell values is set to "us". Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API). 
+ This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format) and shows the total number of rows, the schema and the first 20 rows. The locale for formatting cell values is set to "us". Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API).
 
 
  ```
@@ -175,10 +175,10 @@ val df = sqlContext.read
     .load("/home/user/office/input")
 	val totalCount = df.count
 	// print to screen
-	println("Total number of rows in Excel: "+totalCount)	
+	println("Total number of rows in Excel: "+totalCount)
 	df.printSchema
 	// print formattedValues
-df.show 
+df.show
 ```
 ## Java
   This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format) and shows the total number of rows, the schema and the first 20 rows. The locale for formatting cell values is set to "us".
@@ -201,7 +201,7 @@ df.show();
 ```
 library(SparkR)
 
-Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.12:1.3.10" "sparkr-shell"')
+Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.12:1.5.0" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
 df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "us")
@@ -221,4 +221,3 @@ CREATE TABLE ExcelData
 USING  org.zuinnote.spark.office.excel
 OPTIONS (path "/home/user/office/input", read.locale.bcp47 "us")
 ```
-
