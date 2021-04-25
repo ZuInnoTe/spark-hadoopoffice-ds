@@ -363,7 +363,7 @@ val classLoader = getClass().getClassLoader()
     dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
 When("loaded by Excel data source")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
 assert(9==df.schema.fields.length)
@@ -379,8 +379,8 @@ assert("intcolumn"==df.columns(7))
 assert("longcolumn"==df.columns(8))
 // check data types
 assert(true==df.schema.fields(0).dataType.isInstanceOf[DecimalType])
-assert(2==df.schema.fields(0).dataType.asInstanceOf[DecimalType].precision)
-assert(1==df.schema.fields(0).dataType.asInstanceOf[DecimalType].scale)
+assert(3==df.schema.fields(0).dataType.asInstanceOf[DecimalType].precision)
+assert(2==df.schema.fields(0).dataType.asInstanceOf[DecimalType].scale)
 assert(true==df.schema.fields(1).dataType.isInstanceOf[BooleanType])
 assert(true==df.schema.fields(2).dataType.isInstanceOf[DateType])
 assert(true==df.schema.fields(3).dataType.isInstanceOf[StringType])
@@ -477,6 +477,37 @@ assert(3147483647L==longcolumn(4).get(0))
 assert(10==longcolumn(5).get(0))
 }
 
+"An existing Excel file" should "be read in a dataframe without causing #25" in {
+
+dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
+// create input directory
+dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
+// copy test file
+val classLoader = getClass().getClassLoader()
+    // put testdata on DFS
+    val fileName: String="sho35.xlsx"
+    val fileNameFullLocal=classLoader.getResource(fileName).getFile()
+    val inputFile=new Path(fileNameFullLocal)
+    dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+When("loaded by Excel data source")
+val sqlContext = new SQLContext(sc)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47","us").option("hadoopoffice.read.simple.decimalformat","us").option("hadoopoffice.read.header.read", "false").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+df.printSchema()
+Then("inferred schema is correct and data is correctly parsed")
+// check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
+assert(1==df.schema.fields.length)
+// check data types
+assert(true==df.schema.fields(0).dataType.isInstanceOf[DecimalType])
+assert(9==df.schema.fields(0).dataType.asInstanceOf[DecimalType].precision)
+assert(4==df.schema.fields(0).dataType.asInstanceOf[DecimalType].scale)
+// check data
+val c0 = df.select("c0").collect
+// check data
+// check column1
+assert(new java.math.BigDecimal("16884.924").compareTo(c0(0).get(0).asInstanceOf[java.math.BigDecimal])==0)
+assert(new java.math.BigDecimal("1725.5523").compareTo(c0(1).get(0).asInstanceOf[java.math.BigDecimal])==0)
+}
+
 "A dataframe" should "be written in a partitioned manner" in {
   dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
 dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
@@ -491,7 +522,7 @@ val classLoader = getClass().getClassLoader()
     dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
 When("loaded by Excel data source")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
 Then("data is correctly read and written to partitioned folders")
 // check size
 
@@ -549,7 +580,7 @@ assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem
 assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2018/Month=2/Day=1")))
 
 // check if excels with partitions can be read correctly back
-val df2= sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+val df2= sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 Then("data is correctly reread from partitioned folders")
 
 assert(5==df2.count)
@@ -606,7 +637,8 @@ val classLoader = getClass().getClassLoader()
     dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
 When("loaded by Excel data source")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+df.printSchema()
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
 assert(9==df.schema.fields.length)
@@ -622,8 +654,8 @@ assert("intcolumn"==df.columns(7))
 assert("longcolumn"==df.columns(8))
 // check data types
 assert(true==df.schema.fields(0).dataType.isInstanceOf[DecimalType])
-assert(2==df.schema.fields(0).dataType.asInstanceOf[DecimalType].precision)
-assert(1==df.schema.fields(0).dataType.asInstanceOf[DecimalType].scale)
+assert(3==df.schema.fields(0).dataType.asInstanceOf[DecimalType].precision)
+assert(2==df.schema.fields(0).dataType.asInstanceOf[DecimalType].scale)
 assert(true==df.schema.fields(1).dataType.isInstanceOf[BooleanType])
 assert(true==df.schema.fields(2).dataType.isInstanceOf[DateType])
 assert(true==df.schema.fields(3).dataType.isInstanceOf[StringType])
@@ -738,9 +770,8 @@ When("loaded by Excel data source and written back")
 val sqlContext = new SQLContext(sc)
 val df = sqlContext.read.format("org.zuinnote.spark.office.excel")
 .option("hadoopoffice.read.locale.bcp47", "de")
-.option("hadoopoffice.read.simple.decimalFormat","de")
+.option("hadoopoffice.read.simple.decimalformat","de")
 
-.option("hadoopoffice.read.simple.dateFormat","de")
 .option("hadoopoffice.read.header.read", "true")
 .option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
 df.printSchema
@@ -750,7 +781,9 @@ df.write
   .option("hadoopoffice.write.header.write",true)
   .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 val df2=sqlContext.read.format("org.zuinnote.spark.office.excel")
-.option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+.option("hadoopoffice.read.locale.bcp47", "de")
+.option("hadoopoffice.read.header.read", "true")
+.option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
 assert(9==df2.schema.fields.length)

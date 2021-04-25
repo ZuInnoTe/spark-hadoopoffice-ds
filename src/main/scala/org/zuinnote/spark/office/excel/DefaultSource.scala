@@ -117,8 +117,8 @@ import org.apache.spark.sql.types.TimestampType
 
 private[excel] class DefaultSource
   extends FileFormat with DataSourceRegister {
-  val CONF_SIMPLEMODE="read.spark.simpleMode";
-  val CONF_SIMPLEMODE_MAXROWS="read.spark.simpleMode.maxInferRows";
+  val CONF_SIMPLEMODE="read.spark.simplemode";
+  val CONF_SIMPLEMODE_MAXROWS="read.spark.simpleMode.maxinferrows";
   val DEFAULT_SIMPLEMODE="false";
   val DEFAULT_SIMPLEMODE_MAXROWS = "-1";
 
@@ -274,9 +274,12 @@ private[excel] class DefaultSource
       case (key, value) => {
         hConf.set("hadoopoffice." + key, value);
         hConf.set(key, value);
+
       }
     }
     val hocr = new HadoopOfficeReadConfiguration(hConf)
+
+
     val broadcastedHadoopConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hConf))
 
 
@@ -316,6 +319,7 @@ private[excel] class DefaultSource
 
     (file: PartitionedFile) => {
      // the converter clones the objects to avoid racing conditions among different threads
+
       val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(broadcastSimpleDateFormat.value,broadcastSimpleDecimalFormat.value,broadcastSimpleDateTimeFormat.value )
       excelSimpleConverter.setSchemaRow(broadcastSchema.value)
 
