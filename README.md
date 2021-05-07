@@ -23,7 +23,7 @@ All [options from the HadoopOffice library](https://github.com/ZuInnoTe/hadoopof
 
 Additionally the following options exist:
 
-* "read.spark.simplemnode" (Before 1.5: "read.spark.simpleMode") infers the schema of the DataFrame from the data in the Excel or use a custom schema. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). If the schema is inferred it is done only based on one file in the directory. Additionally, the conversion of Decimals is based on the locale that you define (see hadoopoffice options from above). True if schema should be inferred, False if not. Default: False
+* "read.spark.simplemode" (Before 1.5: "read.spark.simpleMode") infers the schema of the DataFrame from the data in the Excel or use a custom schema. This schema consists of primitive DataTypes of Spark SQL (String, Byte, Short, Integer, Long, Decimal, Date, Boolean). If the schema is inferred it is done only based on one file in the directory. Additionally, the conversion of Decimals is based on the locale that you define (see hadoopoffice options from above). True if schema should be inferred, False if not. Default: False
 * "read.spark.simpleMode.maxinferrows" (as of 1.1.0) (Before 1.5: "read.spark.simpleMode.maxInferRows"). This defines the maximum rows to read for inferring the schema. This is useful if you know already that the schema can be determined from a given number of rows. Alternatively, if you want to provide a custom schema set this to 0. Default: all rows ("-1")
 * There are also other options related to headers, locales etc. (see options from HadoopOffice library)
 
