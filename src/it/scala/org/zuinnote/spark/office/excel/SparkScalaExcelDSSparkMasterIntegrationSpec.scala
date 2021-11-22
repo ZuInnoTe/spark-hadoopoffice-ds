@@ -62,9 +62,12 @@ import org.apache.spark.sql.catalyst.util.DateTimeUtils
 
 
 import scala.collection.mutable.ArrayBuffer
-import org.scalatest.{FlatSpec, BeforeAndAfterAll, GivenWhenThen, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec;
+import org.scalatest._
+import matchers.should._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
 
-class SparkScalaExcelDSSparkMasterIntegrationSpec extends FlatSpec with BeforeAndAfterAll with GivenWhenThen with Matchers {
+class SparkScalaExcelDSSparkMasterIntegrationSpec extends AnyFlatSpec with BeforeAndAfterAll with GivenWhenThen with Matchers {
 
 private var sc: SparkContext = _
 

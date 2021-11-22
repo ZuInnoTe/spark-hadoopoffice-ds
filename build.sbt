@@ -7,7 +7,7 @@ lazy val root = (project in file("."))
 .settings(
 organization := "com.github.zuinnote",
 name := "spark-hadoopoffice-ds",
-version := "1.5.0"
+version := "1.6.0"
 )
  .configs( IntegrationTest )
   .settings( Defaults.itSettings : _*)
@@ -21,7 +21,7 @@ publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.
 
 fork  := true
 
-crossScalaVersions := Seq("2.11.12","2.12.11")
+crossScalaVersions := Seq("2.11.12","2.12.15")
 
 scalacOptions += "-target:jvm-1.8"
 
@@ -47,31 +47,33 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 
 assemblyMergeStrategy in assembly :=  {
     case PathList("META-INF/*.RSA", "META-INF/*.SF","META-INF/*.DSA") => MergeStrategy.discard
-    case x =>
-      val oldStrategy = (assemblyMergeStrategy in assembly).value
-     oldStrategy(x)
+    case x => MergeStrategy.first
 
 }
-libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.5.0" % "compile" exclude("org.apache.xmlgraphics","batik-all")
+libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.6.0" % "compile" exclude("org.apache.xmlgraphics","batik-all")
 
 // following three libraries are only needed for digital signatures
-libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15to18" % "1.68" % "compile"
-libraryDependencies += "org.bouncycastle" % "bcpkix-jdk15to18" % "1.68" % "compile"
-libraryDependencies += "org.apache.santuario" % "xmlsec" % "2.2.1" % "compile"
+libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.69" % "compile"
+libraryDependencies += "org.bouncycastle" % "bcpkix-jdk15on" % "1.69" % "compile"
+libraryDependencies += "org.apache.santuario" % "xmlsec" % "2.2.3" % "compile"
 
-libraryDependencies +=  "com.esotericsoftware" % "kryo-shaded" % "3.0.3" % "provided"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.7" % "provided"
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.7" % "provided"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.2" % "test,it"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.8" % "provided"  exclude("org.apache.xbean","xbean-asm6-shaded")
+
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.8" % "provided" exclude("org.apache.xbean","xbean-asm6-shaded")
+
+libraryDependencies += "org.apache.xbean" % "xbean-asm6-shaded" % "4.10" % "provided"  
+
+
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.10" % "test,it"
 
 libraryDependencies += "javax.servlet" % "javax.servlet-api" % "3.0.1" % "it"
 
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.7.5" % "it" classifier "" classifier "tests"
+libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.7.0" % "it" classifier "" classifier "tests"
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-hdfs" % "2.7.5" % "it" classifier "" classifier "tests"
+libraryDependencies += "org.apache.hadoop" % "hadoop-hdfs" % "2.7.0" % "it" classifier "" classifier "tests"
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-minicluster" % "2.7.5" % "it"
+libraryDependencies += "org.apache.hadoop" % "hadoop-minicluster" % "2.7.0" % "it"

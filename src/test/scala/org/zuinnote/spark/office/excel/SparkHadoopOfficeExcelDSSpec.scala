@@ -20,9 +20,12 @@
  */
 package org.zuinnote.spark.office.excel
 
-import org.scalatest.{ FlatSpec, BeforeAndAfterAll, GivenWhenThen, Matchers }
+import org.scalatest.flatspec.AnyFlatSpec;
+import org.scalatest._
+import matchers.should._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
 
-class SparkHadoopOfficeExcelDSSpec extends FlatSpec with BeforeAndAfterAll with GivenWhenThen with Matchers {
+class SparkHadoopOfficeExcelDSSpec extends AnyFlatSpec with BeforeAndAfterAll with GivenWhenThen with Matchers {
 
   override def beforeAll(): Unit = {
     super.beforeAll()
