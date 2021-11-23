@@ -47,6 +47,7 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 
 assemblyMergeStrategy in assembly :=  {
     case PathList("META-INF/*.RSA", "META-INF/*.SF","META-INF/*.DSA") => MergeStrategy.discard
+    case "META-INF/services/org.apache.spark.sql.sources.DataSourceRegister" => MergeStrategy.filterDistinctLines
     case x => MergeStrategy.first
 
 }
