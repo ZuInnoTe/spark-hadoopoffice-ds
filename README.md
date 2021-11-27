@@ -48,7 +48,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.11
 
-version: 1.5.0
+version: 1.6.0
 
 ## Scala 2.12
 
@@ -56,7 +56,7 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.12
 
-version: 1.5.0
+version: 1.6.0
 
 The Scala 2.12 version requires at least Spark 2.4.0
 
@@ -115,7 +115,7 @@ As you can see in the schema, the datasource reads each Excel row in an array. E
 val sqlContext = sparkSession.sqlContext
 val df = sqlContext.read
     .format("org.zuinnote.spark.office.excel")
-    .option("read.locale.bcp47", "us")  
+    .option("read.locale.bcp47", "en")  
 .load(args(0))
 ```
 Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-an-Excel-document-using-the-Spark2-datasource-API).
@@ -126,7 +126,7 @@ Another option is to infer the schema of primitive Spark SQL DataTypes automatic
 val sqlContext = sparkSession.sqlContext
 val df = sqlContext.read
     .format("org.zuinnote.spark.office.excel")
-    .option("read.locale.bcp47", "us").option("read.spark.simpleMode",true)  
+    .option("read.locale.bcp47", "en").option("read.spark.simpleMode",true)  
 .load(args(0))
 
  ```
@@ -144,7 +144,7 @@ val sRdd = sparkSession.sparkContext.parallelize(Seq(Seq("","","1","A1","Sheet1"
 	val df= sRdd.toDF()
 	df.write
       .format("org.zuinnote.spark.office.excel")
-    .option("write.locale.bcp47", "us")
+    .option("write.locale.bcp47", "en")
 .save("/home/user/office/output")
 ```
 Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-an-Excel-document-using-the-Spark2-datasource-API).
@@ -152,7 +152,7 @@ Find a full example [here](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-a
 You can write with partitions as follows (as of v 1.3.2). Let us assume you have an Excel with Name, Year, Month, Day columns and you want to create partitions by Year, Month, Day. Then you need to use the following code:
  ```
 df.toDF.write.partitionBy("year","month","day").format("org.zuinnote.spark.office.excel")
-.option("write.locale.bcp47", "us")
+.option("write.locale.bcp47", "en")
 .save("/home/user/office/output")
  ```
 
@@ -171,7 +171,7 @@ output/year=2019/month=12/day=31/part-00000.xlsx
 val sqlContext = sparkSession.sqlContext
 val df = sqlContext.read
     .format("org.zuinnote.spark.office.excel")
-    .option("read.locale.bcp47", "us")  // example to set the locale to us
+    .option("read.locale.bcp47", "en")  // example to set the locale to us
     .load("/home/user/office/input")
 	val totalCount = df.count
 	// print to screen
@@ -186,7 +186,7 @@ df.show
  SQLContext sqlContext = sparkSession.sqlContext;
  Dataframe df = sqlContext.read
  .format("org.zuinnote.spark.office.excel")
-    .option("read.locale.bcp47", "us")  // example to set the locale to us
+    .option("read.locale.bcp47", "en")  // example to set the locale to us
     .load("/home/user/office/input");
  	long totalCount = df.count;
 	// print to screen
@@ -201,10 +201,10 @@ df.show();
 ```
 library(SparkR)
 
-Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.12:1.5.0" "sparkr-shell"')
+Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.12:1.6.0" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
-df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "us")
+df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "en")
  ```
 ## Python
 This example loads Excel documents from the folder "/home/user/office/input" using the Excel representation (format).The locale for formatting cell values is set to "us".
@@ -219,5 +219,5 @@ The following statement creates a table that contains Excel data in the folder /
 ```
 CREATE TABLE ExcelData
 USING  org.zuinnote.spark.office.excel
-OPTIONS (path "/home/user/office/input", read.locale.bcp47 "us")
+OPTIONS (path "/home/user/office/input", read.locale.bcp47 "en")
 ```
