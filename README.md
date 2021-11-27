@@ -212,7 +212,7 @@ This example loads Excel documents from the folder "/home/user/office/input" usi
 from pyspark.sql import SQLContext
 sqlContext = SQLContext(sc)
 
-df = sqlContext.read.format('org.zuinnote.spark.office.excel').options('read.locale.bcp47'='us').load('/home/user/office/input')
+df = sqlContext.read.format('org.zuinnote.spark.office.excel').options('read.locale.bcp47'='en').load('/home/user/office/input')
 ```
 ## SQL
 The following statement creates a table that contains Excel data in the folder //home/user/office/input. The locale for formatting cell values is set to "us".
