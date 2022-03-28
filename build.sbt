@@ -51,7 +51,7 @@ assemblyMergeStrategy in assembly := {
   case _ => MergeStrategy.first
 }
 
-libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.6.3" % "compile" exclude("org.apache.xmlgraphics","batik-all")
+libraryDependencies += "com.github.zuinnote" % "hadoopoffice-fileformat" % "1.6.4" % "compile" exclude("org.apache.xmlgraphics","batik-all")
 
 // following three libraries are only needed for digital signatures
 libraryDependencies += "org.bouncycastle" % "bcprov-ext-jdk15on" % "1.70" % "compile"
@@ -71,8 +71,8 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.10" % "test,it"
 
 libraryDependencies += "javax.servlet" % "javax.servlet-api" % "3.0.1" % "it"
 
-libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.17.1" % "test"
-libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.17.1" % "it"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.17.2" % "test"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.17.2" % "it"
 
 libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.7.0" % "it" classifier "" classifier "tests"
 
