@@ -50,7 +50,7 @@ import java.text.NumberFormat
 
 // NOTE: This class is instantiated and used on executor side only, no need to be serializable.
 private[excel] class ExcelOutputWriter(
-  path:       String,
+  val path:       String,
   dataSchema: StructType,
   context:    TaskAttemptContext, options: Map[String, String]) extends OutputWriter {
   /**
@@ -147,5 +147,7 @@ private[excel] class ExcelOutputWriter(
     recordWriter.close(context)
     currentRowNum = 0;
   }
+
+
 
 }

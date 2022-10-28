@@ -23,9 +23,7 @@
 package org.zuinnote.spark.office.excel
 
 
-import org.apache.hadoop.hdfs.MiniDFSCluster
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FSDataInputStream
 import org.apache.hadoop.fs.Path
 
 import java.io.BufferedReader
@@ -42,13 +40,6 @@ import java.util.List
 
 
 import java.text.SimpleDateFormat
-
-import org.apache.hadoop.io.compress.CodecPool
-import org.apache.hadoop.io.compress.CompressionCodec
-import org.apache.hadoop.io.compress.CompressionCodecFactory
-import org.apache.hadoop.io.compress.Decompressor
-import org.apache.hadoop.io.compress.SplittableCompressionCodec
-import org.apache.hadoop.io.compress.SplitCompressionInputStream
 
 import org.zuinnote.hadoop.office.format.common.parser.msexcel.MSExcelParser
 import org.zuinnote.hadoop.office.format.common.HadoopOfficeReadConfiguration
@@ -67,7 +58,7 @@ import org.scalatest._
 import matchers.should._
 import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
 
-class SparkScalaExcelDSSparkMasterIntegrationSpec extends AnyFlatSpec with BeforeAndAfterAll with GivenWhenThen with Matchers {
+class SparkScalaExcelDSSparkMasterIntegrationSpec extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach with GivenWhenThen with Matchers {
 
 private var sc: SparkContext = _
 
@@ -76,25 +67,38 @@ private val master: String = "local[2]"
 private val appName: String = "example-scalasparkexcelinput-integrationtest"
 private val tmpPrefix: String = "ho-integrationtest"
 private var tmpPath: java.nio.file.Path = _
-private val CLUSTERNAME: String ="hcl-minicluster"
 private val DFS_INPUT_DIR_NAME: String = "/input"
 private val DFS_OUTPUT_DIR_NAME: String = "/output"
+private var INPUT_DIR_FULLNAME: String = _
+private var OUTPUT_DIR_FULLNAME: String = _
+
 private val DEFAULT_OUTPUT_FILENAME: String = "part-00000"
 private val DEFAULT_OUTPUT_EXCEL_FILENAME: String = "part-00000.xlsx"
-private val DFS_INPUT_DIR : Path = new Path(DFS_INPUT_DIR_NAME)
-private val DFS_OUTPUT_DIR : Path = new Path(DFS_OUTPUT_DIR_NAME)
-private val NOOFDATANODES: Int =4
-private var dfsCluster: MiniDFSCluster = _
+private var DFS_INPUT_DIR : String = _
+private var DFS_OUTPUT_DIR : String = _
+private var DFS_INPUT_DIR_PATH : Path = _
+private var DFS_OUTPUT_DIR_PATH : Path = _
+
 private var conf: Configuration = _
-private var openDecompressors = ArrayBuffer[Decompressor]();
 
 override def beforeAll(): Unit = {
     super.beforeAll()
 
-		// Create temporary directory for HDFS base and shutdownhook
+		// Create temporary directory for temporary files and shutdownhook
 	// create temp directory
-      tmpPath = Files.createTempDirectory(tmpPrefix)
-      // create shutdown hook to remove temp files (=HDFS MiniCluster) after shutdown, may need to rethink to avoid many threads are created
+      tmpPath = Files.createTempDirectory(tmpPrefix);
+      INPUT_DIR_FULLNAME = tmpPath+DFS_INPUT_DIR_NAME;
+      OUTPUT_DIR_FULLNAME = tmpPath+DFS_OUTPUT_DIR_NAME;
+      DFS_INPUT_DIR = "file://"+INPUT_DIR_FULLNAME;
+      DFS_OUTPUT_DIR= "file://"+OUTPUT_DIR_FULLNAME;
+      DFS_INPUT_DIR_PATH = new Path(DFS_INPUT_DIR);
+      DFS_OUTPUT_DIR_PATH= new Path(DFS_OUTPUT_DIR);
+      val inputDirFile: File = new File(INPUT_DIR_FULLNAME);
+      inputDirFile.mkdirs();
+      val outputDirFile: File = new File(OUTPUT_DIR_FULLNAME);
+      outputDirFile.mkdirs();
+      
+      // create shutdown hook to remove temp files after shutdown, may need to rethink to avoid many threads are created
 	Runtime.getRuntime.addShutdownHook(new Thread("remove temporary directory") {
       	 override def run(): Unit =  {
         	try {
@@ -114,15 +118,11 @@ override def beforeAll(): Unit = {
         			}
         	})
       	} catch {
-        case e: IOException => throw new RuntimeException("Error temporary files in following path could not be deleted "+tmpPath, e)
-    }}})
-	// create DFS mini cluster
-	 conf = new Configuration()
-	val baseDir = new File(tmpPath.toString()).getAbsoluteFile()
-	conf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, baseDir.getAbsolutePath())
-	val builder = new MiniDFSCluster.Builder(conf)
- 	 dfsCluster = builder.numDataNodes(NOOFDATANODES).build()
-	conf.set("fs.defaultFS", dfsCluster.getFileSystem().getUri().toString())
+        case e: IOException => throw new RuntimeException("Error temporary files in following path could not be deleted "+tmpPath, e);
+        }
+        }
+  }
+        )
 	// create local Spark cluster
  	val sparkConf = new SparkConf()
       .setMaster("local[2]")
@@ -131,40 +131,72 @@ override def beforeAll(): Unit = {
  }
 
 
+  override def beforeEach() {
+   // clean up folders
+  cleanFolder( java.nio.file.FileSystems.getDefault().getPath(INPUT_DIR_FULLNAME),false);
 
+  cleanFolder(java.nio.file.FileSystems.getDefault().getPath(OUTPUT_DIR_FULLNAME),true);
+    super.beforeEach(); // To be stackable, must call super.beforeEach
+  }
+
+  override def afterEach() {
+      super.afterEach(); // To be stackable, must call super.afterEach
+  }
+
+ // clean folders
+  def cleanFolder(path: java.nio.file.Path, rootFolder: Boolean) {
+    if (path.toFile().exists()) {
+ try {
+          		Files.walkFileTree(path, new SimpleFileVisitor[java.nio.file.Path]() {
+
+            		override def visitFile(file: java.nio.file.Path,attrs: BasicFileAttributes): FileVisitResult = {
+                
+                		Files.delete(file)
+                  
+             			return FileVisitResult.CONTINUE
+        			}
+
+        		override def postVisitDirectory(dir: java.nio.file.Path, e: IOException): FileVisitResult = {
+          			if (e == null) {
+                    if (rootFolder) {
+                      if (dir.toFile().exists) {
+            			      Files.delete(dir)
+                      }
+                    }
+            				return FileVisitResult.CONTINUE
+          			}
+          			throw e
+        			}
+        	})
+      	} catch {
+        case e: IOException => throw new RuntimeException("Error temporary files in following path could not be deleted "+tmpPath, e)
+    }
+    }
+  }
 
   override def afterAll(): Unit = {
    // close Spark Context
     if (sc!=null) {
 	sc.stop()
     }
-    // close decompressor
-	for ( currentDecompressor <- this.openDecompressors) {
-		if (currentDecompressor!=null) {
-			 CodecPool.returnDecompressor(currentDecompressor)
-		}
- 	}
-    // close dfs cluster
-    dfsCluster.shutdown()
     super.afterAll()
 }
 
 
 "The test excel file" should "be fully read with the input data source" in {
 	Given("Excel 2013 test file on DFS")
-  dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
-	// create input directory
-	dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
+
 	// copy test file
 	val classLoader = getClass().getClassLoader()
     	// put testdata on DFS
     	val fileName: String="excel2013test.xlsx"
     	val fileNameFullLocal=classLoader.getResource(fileName).getFile()
-    	val inputFile=new Path(fileNameFullLocal)
-    	dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+
+
+    java.nio.file.Files.copy(java.nio.file.FileSystems.getDefault().getPath(fileNameFullLocal), java.nio.file.FileSystems.getDefault().getPath(INPUT_DIR_FULLNAME+File.separator+fileName))
 	When("loaded by Excel data source")
   val sqlContext = new SQLContext(sc)
-  val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+  val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").load(DFS_INPUT_DIR)
 	Then("all data can be read correctly")
 	// check schema
     assert("rows"==df.columns(0))
@@ -230,7 +262,6 @@ override def beforeAll(): Unit = {
 
 "A new Excel file" should "be created on DFS and reread correctly" in {
 	Given("In-memory data input")
-  dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
   val sqlContext=new SQLContext(sc)
   import sqlContext.implicits._
   val sRdd = sc.parallelize(Seq(Seq("","","1","A1","Sheet1"),Seq("","This is a comment","2","A2","Sheet1"),Seq("","","3","A3","Sheet1"),Seq("","","A2+A3","B1","Sheet1"))).repartition(1)
@@ -239,10 +270,10 @@ override def beforeAll(): Unit = {
   df.write
       .format("org.zuinnote.spark.office.excel")
     .option("write.locale.bcp47", "de")
-    .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+    .save(DFS_OUTPUT_DIR)
 	Then("stored Excel file on DFS can be read correctly")
 	// fetch results
-  val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+  val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").load(DFS_OUTPUT_DIR)
   assert(3==dfIn.count)
   val rowsDF=dfIn.select(explode(dfIn("rows")).alias("rows"))
   val formattedValues = rowsDF.select("rows.formattedValue").collect
@@ -269,7 +300,6 @@ override def beforeAll(): Unit = {
 
 "A new Excel file" should "be created on DFS with specified headers and reread" in {
 Given("In-memory data input")
-dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
 val sqlContext=new SQLContext(sc)
 import sqlContext.implicits._
 val sRdd = sc.parallelize(Seq(Seq("","","1","A2","Sheet1"),Seq("","This is a comment","2","A3","Sheet1"),Seq("","","3","A4","Sheet1"),Seq("","","A3+A4","B1","Sheet1"))).repartition(1)
@@ -282,10 +312,10 @@ df.write
     .format("org.zuinnote.spark.office.excel")
   .option("write.locale.bcp47", "de")
   .option("hadoopoffice.write.header.write",true)
-  .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+  .save(DFS_OUTPUT_DIR)
 Then("stored Excel file on DFS can be read correctly")
 // fetch results
-val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("read.locale.bcp47", "de").load(DFS_OUTPUT_DIR)
 assert(4==dfIn.count)
 val rowsDF=dfIn.select(explode(dfIn("rows")).alias("rows"))
 val formattedValues = rowsDF.select("rows.formattedValue").collect
@@ -314,7 +344,6 @@ assert("3"==formattedValues(4).get(0))
 
 "A new Excel file" should "be created on DFS based on standard Spark datatypes and reread " in {
 Given("In-memory data input")
-dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
 val sqlContext=new SQLContext(sc)
 import sqlContext.implicits._
 val df = Seq ((1000L, 2.1, "test"),(2000L,3.1,"test2")).toDF("column1","column2","column3")
@@ -323,11 +352,11 @@ df.repartition(1).write
     .format("org.zuinnote.spark.office.excel")
   .option("hadoopoffice.write.locale.bcp47", "de")
   .option("hadoopoffice.write.header.write",false)
-  .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+  .save(DFS_OUTPUT_DIR)
 
 Then("stored Excel file on DFS can be read correctly")
 // fetch results
-val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "en").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+val dfIn = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "en").load(DFS_OUTPUT_DIR)
 assert(2==dfIn.count)
 val rowsDF=dfIn.select(explode(dfIn("rows")).alias("rows"))
 val formattedValues = rowsDF.select("rows.formattedValue").collect
@@ -354,19 +383,16 @@ assert("test2"==formattedValues(5).get(0))
 
 "An existing Excel file" should "be read in a dataframe with simple datatypes" in {
 
-dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
-// create input directory
-dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
 // copy test file
 val classLoader = getClass().getClassLoader()
     // put testdata on DFS
     val fileName: String="testsimple.xlsx"
     val fileNameFullLocal=classLoader.getResource(fileName).getFile()
-    val inputFile=new Path(fileNameFullLocal)
-    dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+   java.nio.file.Files.copy(java.nio.file.FileSystems.getDefault().getPath(fileNameFullLocal), java.nio.file.FileSystems.getDefault().getPath(INPUT_DIR_FULLNAME+File.separator+fileName))
+	
 When("loaded by Excel data source")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(DFS_INPUT_DIR)
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
 assert(9==df.schema.fields.length)
@@ -482,19 +508,16 @@ assert(10==longcolumn(5).get(0))
 
 "An existing Excel file" should "be read in a dataframe without causing #25" in {
 
-dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
-// create input directory
-dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
 // copy test file
 val classLoader = getClass().getClassLoader()
     // put testdata on DFS
     val fileName: String="sho35.xlsx"
     val fileNameFullLocal=classLoader.getResource(fileName).getFile()
-    val inputFile=new Path(fileNameFullLocal)
-    dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+   java.nio.file.Files.copy(java.nio.file.FileSystems.getDefault().getPath(fileNameFullLocal), java.nio.file.FileSystems.getDefault().getPath(INPUT_DIR_FULLNAME+File.separator+fileName))
+	
 When("loaded by Excel data source")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47","us").option("hadoopoffice.read.simple.decimalformat","us").option("hadoopoffice.read.header.read", "false").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47","us").option("hadoopoffice.read.simple.decimalformat","us").option("hadoopoffice.read.header.read", "false").option("read.spark.simplemode", "true").load(DFS_INPUT_DIR)
 df.printSchema()
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
@@ -512,20 +535,17 @@ assert(new java.math.BigDecimal("1725.5523").compareTo(c0(1).get(0).asInstanceOf
 }
 
 "A dataframe" should "be written in a partitioned manner" in {
-  dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
-dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
-// create input directory
-dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
+
 // copy test file
 val classLoader = getClass().getClassLoader()
     // put testdata on DFS
     val fileName: String="partitiontest.xlsx"
     val fileNameFullLocal=classLoader.getResource(fileName).getFile()
-    val inputFile=new Path(fileNameFullLocal)
-    dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+  java.nio.file.Files.copy(java.nio.file.FileSystems.getDefault().getPath(fileNameFullLocal), java.nio.file.FileSystems.getDefault().getPath(INPUT_DIR_FULLNAME+File.separator+fileName))
+	
 When("loaded by Excel data source")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(DFS_INPUT_DIR)
 Then("data is correctly read and written to partitioned folders")
 // check size
 
@@ -573,17 +593,15 @@ df.write
   .option("hadoopoffice.write.header.write",true)
   .partitionBy("Year","Month","Day")
       .format("org.zuinnote.spark.office.excel")
- .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+ .save(DFS_OUTPUT_DIR)
 
 // check if partitions have been created
-assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2019/Month=1/Day=12")))
-assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2019/Month=1/Day=12")))
-assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2018/Month=4/Day=7")))
-assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2018/Month=2/Day=1")))
-assert(true==dfsCluster.getFileSystem().exists(new Path(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME+"/Year=2018/Month=2/Day=1")))
+assert(true==new java.io.File(OUTPUT_DIR_FULLNAME+"/Year=2019/Month=1/Day=12").exists())
+assert(true==new java.io.File(OUTPUT_DIR_FULLNAME+"/Year=2018/Month=4/Day=7").exists())
+assert(true==new java.io.File(OUTPUT_DIR_FULLNAME+"/Year=2018/Month=2/Day=1").exists())
 
 // check if excels with partitions can be read correctly back
-val df2= sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+val df2= sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(DFS_OUTPUT_DIR)
 Then("data is correctly reread from partitioned folders")
 
 assert(5==df2.count)
@@ -628,19 +646,16 @@ assert(7==day2column(4).get(0))
 
 "An existing Excel file" should "be read in a dataframe with simple datatypes and an empty column" in {
 
-dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
-// create input directory
-dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
 // copy test file
 val classLoader = getClass().getClassLoader()
     // put testdata on DFS
     val fileName: String="testemptycolumn.xlsx"
     val fileNameFullLocal=classLoader.getResource(fileName).getFile()
-    val inputFile=new Path(fileNameFullLocal)
-    dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+  java.nio.file.Files.copy(java.nio.file.FileSystems.getDefault().getPath(fileNameFullLocal), java.nio.file.FileSystems.getDefault().getPath(INPUT_DIR_FULLNAME+File.separator+fileName))
+	
 When("loaded by Excel data source")
 val sqlContext = new SQLContext(sc)
-val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+val df = sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(DFS_INPUT_DIR)
 df.printSchema()
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
@@ -757,18 +772,13 @@ assert(10==longcolumn(5).get(0))
 
 
 "An existing Excel file" should "be read in a dataframe with simple datatypes, written in a new file and re-read again" in {
-
-dfsCluster.getFileSystem().delete(DFS_INPUT_DIR,true)
-dfsCluster.getFileSystem().delete(DFS_OUTPUT_DIR,true)
-// create input directory
-dfsCluster.getFileSystem().mkdirs(DFS_INPUT_DIR)
 // copy test file
 val classLoader = getClass().getClassLoader()
     // put testdata on DFS
     val fileName: String="testsimple.xlsx"
     val fileNameFullLocal=classLoader.getResource(fileName).getFile()
-    val inputFile=new Path(fileNameFullLocal)
-    dfsCluster.getFileSystem().copyFromLocalFile(false, false, inputFile, DFS_INPUT_DIR)
+  java.nio.file.Files.copy(java.nio.file.FileSystems.getDefault().getPath(fileNameFullLocal), java.nio.file.FileSystems.getDefault().getPath(INPUT_DIR_FULLNAME+File.separator+fileName))
+	
 When("loaded by Excel data source and written back")
 val sqlContext = new SQLContext(sc)
 val df = sqlContext.read.format("org.zuinnote.spark.office.excel")
@@ -776,17 +786,17 @@ val df = sqlContext.read.format("org.zuinnote.spark.office.excel")
 .option("hadoopoffice.read.simple.decimalformat","de")
 
 .option("hadoopoffice.read.header.read", "true")
-.option("read.spark.simpleMode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_INPUT_DIR_NAME)
+.option("read.spark.simpleMode", "true").load(DFS_INPUT_DIR)
 df.printSchema
 df.write
     .format("org.zuinnote.spark.office.excel")
   .option("hadoopoffice.write.locale.bcp47", "de")
   .option("hadoopoffice.write.header.write",true)
-  .save(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+  .save(DFS_OUTPUT_DIR)
 val df2=sqlContext.read.format("org.zuinnote.spark.office.excel")
 .option("hadoopoffice.read.locale.bcp47", "de")
 .option("hadoopoffice.read.header.read", "true")
-.option("read.spark.simplemode", "true").load(dfsCluster.getFileSystem().getUri().toString()+DFS_OUTPUT_DIR_NAME)
+.option("read.spark.simplemode", "true").load(DFS_OUTPUT_DIR)
 Then("inferred schema is correct and data is correctly parsed")
 // check inferred schema decimal precision 1 scale 1, boolean, date, string, decimal precision 3 scale 3, byte, short, int, long
 assert(9==df2.schema.fields.length)

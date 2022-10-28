@@ -393,7 +393,7 @@ private[excel] class DefaultSource
                  if (x != null)  {
                     val currentDataType = dataSchema.fields(j).dataType
                     if (currentDataType.isInstanceOf[DateType]) {
-                        rowData = rowData :+ DateTimeUtils.millisToDays(x.asInstanceOf[Date].getTime())
+                        rowData = rowData :+ DateTimeUtils.fromJavaDate(new java.sql.Date(x.asInstanceOf[Date].getTime()))
                     } else if  (currentDataType.isInstanceOf[DecimalType]) {
                       val sparkDecimal: Decimal = new Decimal()
                       sparkDecimal.set(new scala.math.BigDecimal(x.asInstanceOf[BigDecimal]))
