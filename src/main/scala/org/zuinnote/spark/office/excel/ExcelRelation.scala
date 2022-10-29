@@ -15,7 +15,6 @@
  */
 package org.zuinnote.spark.office.excel
 
-import scala.collection.JavaConversions._
 
 import org.apache.spark.sql.sources.{ BaseRelation, TableScan }
 import org.apache.spark.sql.types.DataType

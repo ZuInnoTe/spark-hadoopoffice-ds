@@ -45,7 +45,7 @@ class HadoopFileExcelReader(
   file: PartitionedFile, conf: Configuration) extends Iterator[ArrayWritable] with Closeable {
   val LOG = LogFactory.getLog(classOf[HadoopFileExcelReader])
   private var reader: RecordReader[Text, ArrayWritable] = null
-  private val iterator = {
+  private val iteratorHadoop = {
     val fileSplit = new FileSplit(
       new Path(new URI(file.filePath)), file.start, file.length, Array.empty) // todo: implement locality (replace Array.empty with the locations)
     val attemptId = new TaskAttemptID(new TaskID(new JobID(), TaskType.MAP, 0), 0)
@@ -58,9 +58,9 @@ class HadoopFileExcelReader(
   
   def getReader: RecordReader[Text, ArrayWritable] = reader
 
-  override def hasNext: Boolean = iterator.hasNext
+  override def hasNext: Boolean = iteratorHadoop.hasNext
 
-  override def next(): ArrayWritable = iterator.next()
+  override def next(): ArrayWritable = iteratorHadoop.next()
 
   override def close(): Unit = {
     if (reader != null) {

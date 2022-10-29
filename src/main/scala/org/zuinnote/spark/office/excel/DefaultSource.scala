@@ -166,6 +166,7 @@ private[excel] class DefaultSource
       var defaultRow: ListBuffer[StructField] = new ListBuffer[StructField]()
       var defaultRowLength: Int = 0
       val file = files(0) // we scan only the first file
+ 
       // create a partitioned file
       val partFile = new PartitionedFile(null, file.getPath().toUri().toString(), 0, file.getLen(), Array.empty)
       val reader = new HadoopFileExcelReader(partFile, broadcastedHadoopConf.value.value)
@@ -173,18 +174,16 @@ private[excel] class DefaultSource
 
       var i = 0
       val excelSimpleConverter = new ExcelConverterSimpleSpreadSheetCellDAO(hocr.getSimpleDateFormat,hocr.getSimpleDecimalFormat,hocr.getSimpleDateTimeFormat );
-      for (excelrow <- reader) {
-        if ((useHeader) && (i == 0)) { // first row is the header. It is expected that it has the all columns that have data are filled
+      if (useHeader) { // first row is the header. It is expected that it has the all columns that have data are filled
           val ph = reader.getReader.asInstanceOf[ExcelRecordReader].getOfficeReader.getCurrentParser.getHeader()
           for (x <- ph) {
             headers = headers :+ x
           }
-          i+=1
-        } else {
+      }
+      for (excelrow <- reader) {
            if (i==maxInferRows)  break
             excelSimpleConverter.updateSpreadSheetCellRowToInferSchemaInformation(excelrow.get.asInstanceOf[Array[SpreadSheetCellDAO]])
             i += 1 // next row
-        }
       }
       // create spark structtype out of the schema
       val simpleSchema = excelSimpleConverter.getSchemaRow;
@@ -218,6 +217,7 @@ private[excel] class DefaultSource
 
       }
       reader.close();
+      println("####i: "+StructType(defaultRow.toSeq))
       Some(StructType(defaultRow.toSeq))
     }
 
@@ -266,6 +266,7 @@ private[excel] class DefaultSource
     filters:         Seq[Filter],
     options:         Map[String, String],
     hadoopConf:      Configuration): PartitionedFile => Iterator[InternalRow] = {
+   
     var hConf=new Configuration();
       if (hadoopConf!=null) {
       hConf = hadoopConf

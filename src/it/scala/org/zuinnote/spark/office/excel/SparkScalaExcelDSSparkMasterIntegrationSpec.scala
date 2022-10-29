@@ -590,7 +590,7 @@ assert(1==daycolumn(4).get(0))
 // write
 df.write
   .option("hadoopoffice.write.locale.bcp47", "de")
-  .option("hadoopoffice.write.header.write",true)
+  .option("hadoopoffice.write.header.write","true")
   .partitionBy("Year","Month","Day")
       .format("org.zuinnote.spark.office.excel")
  .save(DFS_OUTPUT_DIR)
@@ -600,7 +600,9 @@ assert(true==new java.io.File(OUTPUT_DIR_FULLNAME+"/Year=2019/Month=1/Day=12").e
 assert(true==new java.io.File(OUTPUT_DIR_FULLNAME+"/Year=2018/Month=4/Day=7").exists())
 assert(true==new java.io.File(OUTPUT_DIR_FULLNAME+"/Year=2018/Month=2/Day=1").exists())
 
+// custom schema - this is needed due to a Spark bug (??) when reading local files that are partitioned: dataSchema and requiredSchema are empty
 // check if excels with partitions can be read correctly back
+
 val df2= sqlContext.read.format("org.zuinnote.spark.office.excel").option("hadoopoffice.read.locale.bcp47", "de").option("hadoopoffice.read.header.read", "true").option("read.spark.simplemode", "true").load(DFS_OUTPUT_DIR)
 Then("data is correctly reread from partitioned folders")
 
