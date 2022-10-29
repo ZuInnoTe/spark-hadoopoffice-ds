@@ -2,7 +2,11 @@
 [![Build Status](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds.svg?branch=master)](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ebd5a75819fb4636ad176f30078fd776)](https://www.codacy.com/app/jornfranke/spark-hadoopoffice-ds?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ZuInnoTe/spark-hadoopoffice-ds&amp;utm_campaign=Badge_Grade)
 
-A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). This Spark datasource assumes at least Spark 2.0.1 (but we recommend at least Spark 2.3.0) and Scala 2.11. Scala 2.12 is supported on Spark 2.4.0 and higher. However, the HadoopOffice library can also be used directly from Spark 1.x and/or Scala 2.10 (see [how to](https://github.com/ZuInnoTe/hadoopoffice/wiki) section). Currently this datasource supports the following formats of the HadoopOffice library:
+A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). 
+
+This Spark datasource assumes at least Spark 3.x and Scala 2.12. Scala 2.13 is supported as well.
+
+ However, the HadoopOffice library can also be used directly from Spark 1.x and/or Scala 2.10 (see [how to](https://github.com/ZuInnoTe/hadoopoffice/wiki) section). Currently this datasource supports the following formats of the HadoopOffice library:
 
 * Excel
   * Datasource format: org.zuinnote.spark.office.Excel
@@ -42,13 +46,7 @@ Additionally, the following options of the standard Hadoop API are supported:
 
 A lot of options changed in version 1.2.0 to harmonize behavior with other Big Data platforms. Read carefully the documentation and test your application.
 
-## Scala 2.11
-
-groupId: com.github.zuinnote
-
-artifactId: spark-hadoopoffice-ds_2.11
-
-version: 1.6.4
+Since version 1.7.0 you need to use Spark 3.x and at least Scala 2.12
 
 ## Scala 2.12
 
@@ -56,15 +54,29 @@ groupId: com.github.zuinnote
 
 artifactId: spark-hadoopoffice-ds_2.12
 
-version: 1.6.4
+version: 1.7.0
 
-The Scala 2.12 version requires at least Spark 2.4.0
+## Scala 2.13
+
+groupId: com.github.zuinnote
+
+artifactId: spark-hadoopoffice-ds_2.12
+
+version: 1.7.0
+
+The Scala 2.13 version requires at least Spark 3.x
 
 ## Older Scala versions
 
 Note: If you require Scala 2.10 then you cannot use this data source, but you can use the Hadoop FileFormat if you want to use the latest HadoopOffice version, cf. an example for [reading](https://github.com/ZuInnoTe/hadoopoffice/wiki/Read-Excel-document-using-Spark-1.x) and [writing](https://github.com/ZuInnoTe/hadoopoffice/wiki/Write-Excel-document-using-Spark-1.x).
 
 Alternatively you can use the older version of this data source (not recommended): 1.1.1 (see [documentation](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/tree/s2-ho-1.1.1)). However, in this case you will miss features and bug fixes.
+
+If you need Scala 2.11 then you can use an older version of this data source (not recommended): 1.6.4 (see [documentation](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/tree/s2-ho-1.6.4)). However, in this case you will miss features and bug fixes.
+
+## Spark versions
+Note: if you require Spark 2.x then you cannot use this data source (minimal version: 3.x). You can use an older version of this data source (not recommended): 1.6.4 (see [documentation](https://github.com/ZuInnoTe/spark-hadoopoffice-ds/tree/s2-ho-1.6.4)). However, in this case you will miss features and bug fixes.
+
 
 # Schema
 There are two different schemas that you can configure:
@@ -201,7 +213,7 @@ df.show();
 ```
 library(SparkR)
 
-Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.12:1.6.4" "sparkr-shell"')
+Sys.setenv('SPARKR_SUBMIT_ARGS'='"--packages" "com.github.zuinnote:spark-hadoopoffice-ds_2.12:1.7.0" "sparkr-shell"')
 sqlContext <- sparkRSQL.init(sc)
 
 df <- read.df(sqlContext, "/home/user/office/input", source = "org.zuinnote.spark.office.excel", "read.locale.bcp47" = "en")
