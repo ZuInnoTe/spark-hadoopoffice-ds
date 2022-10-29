@@ -4,7 +4,7 @@
 
 A [Spark datasource](http://spark.apache.org/docs/latest/sql-programming-guide.html#data-sources) for the [HadoopOffice library](https://github.com/ZuInnoTe/hadoopoffice). 
 
-This Spark datasource assumes at least Spark 3.x and Scala 2.12. Scala 2.13 is supported as well.
+This Spark datasource assumes at least Spark 3.x and Scala 2.12. Scala 2.13 is supported as well. Note: Spark 2.x is probably working just fine with this datasource, but it is not tested anymore.
 
  However, the HadoopOffice library can also be used directly from Spark 1.x and/or Scala 2.10 (see [how to](https://github.com/ZuInnoTe/hadoopoffice/wiki) section). Currently this datasource supports the following formats of the HadoopOffice library:
 
