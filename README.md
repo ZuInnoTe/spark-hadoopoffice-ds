@@ -1,3 +1,7 @@
+# HadoopOffice is not maintained anymore
+***HadoopOffice is not maintained anymore.***
+
+I recommend to use the [Open Document Format](https://en.wikipedia.org/wiki/OpenDocument) (ODF) for processing of office documents and do this outside a Big Data platform. It is a vendor-independent standard format that can be processed by many different technologies.
 # spark-hadoopoffice-ds
 [![Build Status](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds.svg?branch=master)](https://travis-ci.org/ZuInnoTe/spark-hadoopoffice-ds)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ebd5a75819fb4636ad176f30078fd776)](https://www.codacy.com/app/jornfranke/spark-hadoopoffice-ds?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ZuInnoTe/spark-hadoopoffice-ds&amp;utm_campaign=Badge_Grade)
